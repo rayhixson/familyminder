@@ -1,0 +1,104 @@
+
+
+h2 {
+    font-size: x-small;
+    color: red;
+}
+
+div.person{
+    background-color: blue;
+    margin: 5px;
+    border: 1px solid green;
+    border-radius: 50%;
+    /*padding: 5px 5 5 5px;*/
+    margin: 5 5 5 5;
+}
+
+
+
+img.person{
+    margin: 5px;
+    border: 1px solid green;
+    border-radius: 50%;
+    background-color: blue;
+}
+
+
+div.mainContent {
+    margin: auto;
+    width:800px;
+    height: 100%;
+}
+
+div.mainLevel {
+    height: 200px;
+    background-color: #001110;
+    border: 2px dashed #ff0000;
+    border-radius: 25%;
+    padding: 25px;
+    vertical-align: middle;
+}
+
+div.centerer {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+div.mainLevel div.person {
+    float: left;
+    width: 30%;
+    height: 70%;
+}
+
+div.children {
+    height: 200px;
+    background-color: #000222;
+    text-align: center;
+    margin: auto;
+ 
+    padding: 25px;
+    border: 2px dashed #ff0000;
+    border-radius: 25%;
+}
+
+div.children div.person {
+    float: left;
+    width: 10%;
+    Height: 10%;
+}
+
+div.grandChildren {
+    height: 200px;
+    background-color: #038760;
+    text-align: center;
+    margin: auto;
+
+    padding: 25px;
+    border: 2px dashed #ff0000;
+    border-radius: 25%;
+}
+
+div.grandChildren div.person {
+    float: left;
+    width: 10%;
+    height: 10%;
+}
+
+div.greatGrand {
+    height: 200px;
+    background-color: #004440;
+    text-align: center;
+    margin: auto;
+
+    padding: 25px;
+    border: 2px dashed #ff0000;
+    border-radius: 25%;
+}
+
+div.greatGrand div.person {
+    float: left;
+    width: 10%;
+    height: 10%;
+}
+
