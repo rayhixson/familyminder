@@ -13,69 +13,92 @@ function getApp() {
 	});
 }
 
-function getUsers() {
+function getUsers(callback) {
 	var url = '/'+ORG+'/'+APP+'/users';
 	
 	http(url, 'GET', null, function(data) {
 		$("#raw").append(JSON.stringify(data, null, 2));
-		
-		var html = '';
+
 		var people = '';
+		var parray = [];
+		
 		var len = data.entities.length;
 		for (var i=0; i < len; i++) {
 			var e = data.entities[i];
-			html += "<hr/>";
-			html += '<form id="saveform-' + e.uuid + '">';
-			html += 'ID: <input id="id" value="'+e.uuid+'" type="text" disabled="true" size="40"></input><br/>';
-			html += 'Name: <input id="username" value="'+e.username+'" type="text"></input><br/>';
-			html += 'Email: <input id="email" value="'+e.email+'" type="text"></input><br/>';
+			//function Person(uuid, name, bday, email, image) {
+			var person = new Person(e.uuid, e.username, e.birthday, e.email, e.picture);
+			
 			if (e.metadata.connections) {
-				html += '<div class="kids">' + e.metadata.connections.children + "</div>"; 
-			} else {
-				html += "No kids";
+				person.kidsLink = e.metadata.connections.children;
+				person.spouseLink = e.metadata.connections.spouse;
 			}
-			html += "<br/>";
-			html += 'Image URL: <input id="image" value="'+e.picture+'" type="text" size="100"></input><br/>';
-			html += '<img src="' + e.picture + '" width="100" height="100"/><br/>';
-			html += '<input type="button" value="Save Changes"'
-				+ ' onclick="saveUser($(\'#saveform-'+e.uuid+' > #id\').val(), $(\'#saveform-'+e.uuid+' > #username\').val(), $(\'#saveform-'+e.uuid+' > #email\').val(), $(\'#saveform-'+e.uuid+' > #image\').val());"></input><br/>';
-			html += "</form>";
+			parray.push(person);
 			
 			people += '<option value="'+e.uuid+'">'
 				+ e.username + '</option>';
 		}
-		$("#users").html(html);
+		
 		$("#father").html(people);
 		$("#child").html(people);
 		
-		// now get the kids
-		$(".kids").each(function(i, el) {
-			var kurl = '/'+ORG+'/'+APP+$(el).text();
-			// find dads uid in this link
-			var dad = $(el).text().split('/')[2];
-			http(kurl, 'GET', null, function(data) {
-				//console.log("Kiddo: " + JSON.stringify(data, null, 2));
-				var html = 'Kids: ';
-				var len = data.entities.length;
-				for (var i=0; i < len; i++) {
-					if (i > 0) {
-						html += ", ";
-					}
-					html += data.entities[i].username
-						+ '<button onclick="removeKid(\'' + dad + '\', \'' + data.entities[i].username + '\');">'
-						+ 'x</button>';
-				}
-				
-				$(el).html(html);
-			});
-		});
+		callback(parray);
 	});
 }
 
-function removeKid(dad, child) {
-	var url = '/'+ORG+'/'+APP+'/users/'+dad+'/children/users/'+child
+function derefRelations(parent) {
+	// now get the kids
+		if (parent.kidsLink) {
+			var kurl = '/'+ORG+'/'+APP+parent.kidsLink;
+			var daduuid = parent.kidsLink.split('/')[2];
+			http(kurl, 'GET', null, function(kdata) {
+				console.log("URL : " + kurl);
+				console.log("Child Data: " + JSON.stringify(kdata, null, 2));
+				var len = kdata.entities.length;
+				var kds = [];
+				for (var i=0; i < len; i++) {
+					kds.push({ "username": kdata.entities[i].username });
+				}
+				parent.kids(kds);
+			});
+		}
+		if (parent.spouseLink) {
+			var kurl = '/'+ORG+'/'+APP+parent.spouseLink;
+			var puuid = parent.spouseLink.split('/')[2];
+			http(kurl, 'GET', null, function(kdata) {
+				var len = kdata.entities.length;
+				for (var i=0; i < len; i++) {
+					parent.spouseName(kdata.entities[i].username)
+				}
+			});
+		}
+}
+
+function removeChildRelation(dad, child, callback) {
+	var url = '/'+ORG+'/'+APP+'/users/'+dad.uuid+'/children/users/'+child
 	http(url, 'DELETE', null, function(data) {
-		getUsers();
+		callback();
+	});
+}
+
+function addChildRelation(dad, child, callback) {
+	if (dad.uuid == child) {
+		alert("One cannot father oneself.");
+		return false;
+	}
+	var url = '/'+ORG+'/'+APP+'/users/'+dad.uuid+'/children/'+child;
+   	http(url, 'POST', null, function() {
+	   	callback();
+	});
+}
+
+function addSpouseRelation(person, spouse) {
+	if (person == spouse) {
+		alert("One cannot spouse oneself.");
+		return false;
+	}
+	var url = '/'+ORG+'/'+APP+'/users/'+person+'/spouse/'+spouse;
+   	http(url, 'POST', null, function(data) {
+   		derefRelations(data);
 	});
 }
 
@@ -108,41 +131,34 @@ function login(name, password) {
 	});
 }
 
-function createUser(username, email, imgUrl) {
+function createUser(username, callback) {
    	var postData = {
         'username': username,
-        'picture': imgUrl,
-       	'email': email
     };
    	
     var url = '/'+ORG+'/'+APP+'/users';
     http(url, 'POST', JSON.stringify(postData), function (data) {
-	   	getUsers();
+ 		var len = data.entities.length;
+		for (var i=0; i < len; i++) {
+			var e = data.entities[i];
+			//function Person(uuid, name, bday, email, image) {
+			var person = new Person(e.uuid, e.username, e.birthday, e.email, e.picture);
+			
+			callback(person);
+		}
 	});
 }
 
-function saveUser(id, username, email, imgUrl) {
+function saveUser(id, username, bday, email, imgUrl, callback) {
    	var postData = {
         'username': username,
         'picture': imgUrl,
+        'birthday': bday,
        	'email': email
     };
    	
     var url = '/'+ORG+'/'+APP+'/users/'+id;
-    http(url, 'PUT', JSON.stringify(postData), function (data) {
-	   	getUsers();
-	});
-}
-
-function relate(dad, child) {
-	if (dad == child) {
-		alert("One cannot father oneself.");
-		return false;
-	}
-	var url = '/'+ORG+'/'+APP+'/users/'+dad+'/children/'+child;
-   	http(url, 'POST', null, function(data) {
-   		getUsers();
-	});
+    http(url, 'PUT', JSON.stringify(postData), callback);
 }
 
 function http(url, method, data, callback) {
@@ -169,8 +185,10 @@ function http(url, method, data, callback) {
 		dataType: "json"
 	})
 		.done(function(data, status, xhr) {
-			if (method == 'POST')
-				console.log("Done: " + xhr.responseText);
+			if (method != 'GET') {
+				console.log("XHR: " + xhr.responseText);
+				console.log("Data: " + JSON.stringify(data, null, 2));
+			}
 			callback(data);
 		})
 		.fail(function(xhr, status, err) {

@@ -12,6 +12,16 @@ div.container {
     margin-bottom: 5px;
     margin-top: 10px;
 }
+
+table, th, td {
+	border: 1px solid black;
+/*	border-collapse: collapse; */
+}
+
+tr:nth-child(odd) {
+	background-color: #CCFFCC;
+}
+
 nav.nav a {
     color: midnightblue;
 }

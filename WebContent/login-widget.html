@@ -1,0 +1,37 @@
+<script>
+function showToken(token) {
+	$("#loggedin").show();
+	$("#token").append(token);
+	$("#login").hide();
+}
+
+function showLogin() {
+	$("#loggedin").hide();
+	$("#login").show();
+}
+
+	var token = Cookies.get("token");
+	if (token) {
+		showToken(token);
+	} else {
+		showLogin();
+	}
+</script>
+
+<div class="container">
+	<form>
+	<div id="login">
+		Name: <input id="admin-name" type="text" value="guser"></input><br/>
+		Password: <input id="admin-pw" type="password" value="gpw"></input><br/>
+		<input value="Login" type="button" onclick="login($('#admin-name').val(), $('#admin-pw').val());"></input>
+	</div>
+	<div id="loggedin">
+		<div id="token">
+			Token: 
+		</div>
+
+		<br/>
+		<input value="Logout" type="button" onclick="logout();"></input>
+	</div>
+	</form>
+</div>
