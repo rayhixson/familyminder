@@ -48,7 +48,6 @@ div.mainPerson img {
     margin: 5px;
 }
 div.person{
-    font-size: larger;
     font-family: Arial, sans-serif;
 /*  border-radius: 100%;
     border: 1px solid black;*/
@@ -160,6 +159,7 @@ span.greatGrandchildLabel {
 .divName {
     color: purple;
     font-weight: 500;
+    display: block;
 }
 .divBDay {
     font-size: .8em;

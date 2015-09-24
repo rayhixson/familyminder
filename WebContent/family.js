@@ -1,36 +1,49 @@
 // -------------- BEGIN Person CLASS -------------
 
+function personFromEntity(usergridEntity) {
+	var p = new Person(usergridEntity.uuid, usergridEntity.username, usergridEntity.birthday, 
+			usergridEntity.email, usergridEntity.picture);
+
+	if (usergridEntity.metadata.connections) {
+		p.kidsLink = ko.observable(usergridEntity.metadata.connections.children);
+		p.spouseLink = ko.observable(usergridEntity.metadata.connections.spouse);
+	}
+	
+	return p;
+}
+
 function Person(uuid, name, bday, email, image) {
 	var self = this;
-    self.id = name.toLowerCase();
-    self.uuid = uuid;
-    self.username = name;
-    self.bday = bday;
-    self.email = email;
+    self.id = ko.observable(name.toLowerCase());
+    self.uuid = ko.observable(uuid);
+    self.username = ko.observable(name);
+    self.bday = ko.observable(bday);
+    self.email = ko.observable(email);
     self.image = ko.observable(image);
-    self.kidsLink = null;
-    self.spouseLink = null;
-    self.spouseName = ko.observable();
+    self.kidsLink = ko.observable();
+    self.spouseLink = ko.observable();
+    // A Person object
+    self.spouse = ko.observable();
     
-    self.dataTitle = ko.computed(function() { return "title-" + self.id; });
-    self.secondImage = ko.computed(function() { return "images/" + self.id +"2.jpg" });
-    self.mainImage = ko.computed(function() { return "images/" + self.id +".jpg"; });
-    self.mailTo = ko.computed(function() { return "mailto:" + self.email; });
+    self.dataTitle = ko.computed(function() { return "title-" + self.id(); });
+    self.secondImage = ko.computed(function() { return "images/" + self.id() +"2.jpg" });
+    self.mainImage = ko.computed(function() { return "images/" + self.id() +".jpg"; });
+    self.mailTo = ko.computed(function() { return "mailto:" + self.email(); });
     
-    // relations
+    // An Array of Person objects
     self.kids = ko.observableArray([]);
     
 	// functions
 	self.save = function() {
-		saveUser(this.uuid, this.username, this.bday, 
-				this.email, this.image, function() {
+		saveUser(self.uuid(), self.username(), self.bday(), 
+				self.email(), self.image(), function() {
 			personViewModel.showSavedAlert(true);
 		});
 	};
 
     self.makeChild = function(parent) {
-    	addChildRelation(parent, self.uuid, function() {
-    		parent.kids.push({ "username": self.username});
+    	addChildRelation(parent, self.uuid(), function() {
+    		parent.kids.push(self);
     	});
     }
     
@@ -38,7 +51,7 @@ function Person(uuid, name, bday, email, image) {
     	removeChildRelation(self, kid, function() {
     		var len = self.kids().length;
     		for (var i=0; i < len; i++) {
-    			if (self.kids()[i].username == kid) {
+    			if (self.kids()[i].username() == kid) {
     				self.kids.splice(i, 1);
     				break;
     			}
@@ -50,11 +63,38 @@ function Person(uuid, name, bday, email, image) {
 function PersonViewModel() {
 	var self = this;
 	
+	self.loginname = ko.observable("guser");
+	self.password = ko.observable("gpw");
+	self.token = ko.observable();
+	
 	self.people = ko.observableArray([]);
 	self.showSavedAlert = ko.observable(false);
 	self.newPersonName = ko.observable();
 	
-	self.dad = new Person("1", "Dad", "Mar 28", "spoog@mon.com");
+	self.isLoggedIn = ko.observable(false);
+	self.dad = ko.observable();
+	
+	//	Functions
+	
+	self.getData = function() {
+		var t = Cookies.get("token");
+		if (t) {
+			self.token(t);
+			self.isLoggedIn(true);
+
+		getUser("dad", function(d) {
+			self.dad(d);
+		});
+
+		getUsers(function(people) {
+			self.people(people);
+			for (var i=0; i < self.people().length; i++) {
+				var p = self.people()[i];
+				derefRelations(p);
+			}
+		});
+		}
+	};
 	
 	self.addUser = function() {
 		createUser(this.newPersonName(), function(person) {
@@ -62,23 +102,32 @@ function PersonViewModel() {
 			this.newPersonName = "";
 		});
 	};
+	
+	self.login = function() {
+		var args = { grant_type: "password", username: self.loginname, password: self.password };
+    	var url = HOST+'/'+ORG+'/'+APP+'/token';
 
-	getUsers(function(people) {
-		self.people(people);
-		for (var i=0; i < self.people().length; i++) {
-			var p = self.people()[i];
-			derefRelations(p);
-		}
-	});
+    	$.get(url, args, function (data) {
+    		var token = data.access_token;
+
+    		Cookies.set('token', token, { expires: 30 });
+			self.getData();
+    	});
+	};
+
+	self.logout = function() {
+		Cookies.remove('token');
+		self.isLoggedIn(false);
+		self.dad(null);
+		self.people([]);
+	};
+
+	// Execute this
+	self.getData();
 }
 
 var personViewModel = new PersonViewModel();
 ko.applyBindings(personViewModel);
-
-// Methods of Person
-Person.prototype.addKid = function(child) {
-    this.kids[this.kids.length++] = child;
-}
 
 // Can be a child, grandchild, great, etc
 // use this information in the future to figure out which css to use

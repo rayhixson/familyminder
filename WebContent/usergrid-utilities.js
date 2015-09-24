@@ -13,33 +13,33 @@ function getApp() {
 	});
 }
 
+function getUser(nameOrId, callback) {
+	var url = '/'+ORG+'/'+APP+'/users/'+nameOrId;
+	
+	var person = null;
+	http(url, 'GET', null, function(data) {
+		$("#raw").append(JSON.stringify(data, null, 2));
+
+		person = personFromEntity(data.entities[0]);
+		
+		callback(person);
+		derefRelations(person);
+	});
+}
+
 function getUsers(callback) {
 	var url = '/'+ORG+'/'+APP+'/users';
 	
 	http(url, 'GET', null, function(data) {
-		$("#raw").append(JSON.stringify(data, null, 2));
+		//$("#raw").append(JSON.stringify(data, null, 2));
 
-		var people = '';
 		var parray = [];
 		
 		var len = data.entities.length;
 		for (var i=0; i < len; i++) {
-			var e = data.entities[i];
-			//function Person(uuid, name, bday, email, image) {
-			var person = new Person(e.uuid, e.username, e.birthday, e.email, e.picture);
-			
-			if (e.metadata.connections) {
-				person.kidsLink = e.metadata.connections.children;
-				person.spouseLink = e.metadata.connections.spouse;
-			}
+			var person = personFromEntity(data.entities[i]);
 			parray.push(person);
-			
-			people += '<option value="'+e.uuid+'">'
-				+ e.username + '</option>';
 		}
-		
-		$("#father").html(people);
-		$("#child").html(people);
 		
 		callback(parray);
 	});
@@ -47,34 +47,31 @@ function getUsers(callback) {
 
 function derefRelations(parent) {
 	// now get the kids
-		if (parent.kidsLink) {
-			var kurl = '/'+ORG+'/'+APP+parent.kidsLink;
-			var daduuid = parent.kidsLink.split('/')[2];
-			http(kurl, 'GET', null, function(kdata) {
-				console.log("URL : " + kurl);
-				console.log("Child Data: " + JSON.stringify(kdata, null, 2));
-				var len = kdata.entities.length;
-				var kds = [];
-				for (var i=0; i < len; i++) {
-					kds.push({ "username": kdata.entities[i].username });
-				}
-				parent.kids(kds);
-			});
-		}
-		if (parent.spouseLink) {
-			var kurl = '/'+ORG+'/'+APP+parent.spouseLink;
-			var puuid = parent.spouseLink.split('/')[2];
-			http(kurl, 'GET', null, function(kdata) {
-				var len = kdata.entities.length;
-				for (var i=0; i < len; i++) {
-					parent.spouseName(kdata.entities[i].username)
-				}
-			});
-		}
+	if (parent.kidsLink()) {
+		var kurl = '/'+ORG+'/'+APP+parent.kidsLink();
+
+		var kds = [];
+		http(kurl, 'GET', null, function(kdata) {
+			//console.log("URL : " + kurl);
+			//console.log("Child Data: " + JSON.stringify(kdata, null, 2));
+			var len = kdata.entities.length;
+			for (var i=0; i < len; i++) {
+				kds.push(personFromEntity(kdata.entities[i]));
+			}
+			parent.kids(kds);
+		});
+	}
+	if (parent.spouseLink()) {
+		var kurl = '/'+ORG+'/'+APP+parent.spouseLink();
+
+		http(kurl, 'GET', null, function(kdata) {
+			parent.spouse(personFromEntity(kdata.entities[0]));
+		});
+	}
 }
 
 function removeChildRelation(dad, child, callback) {
-	var url = '/'+ORG+'/'+APP+'/users/'+dad.uuid+'/children/users/'+child
+	var url = '/'+ORG+'/'+APP+'/users/'+dad.uuid()+'/children/users/'+child
 	http(url, 'DELETE', null, function(data) {
 		callback();
 	});
@@ -85,7 +82,7 @@ function addChildRelation(dad, child, callback) {
 		alert("One cannot father oneself.");
 		return false;
 	}
-	var url = '/'+ORG+'/'+APP+'/users/'+dad.uuid+'/children/'+child;
+	var url = '/'+ORG+'/'+APP+'/users/'+dad.uuid()+'/children/'+child;
    	http(url, 'POST', null, function() {
 	   	callback();
 	});
@@ -102,35 +99,6 @@ function addSpouseRelation(person, spouse) {
 	});
 }
 
-function showToken(token) {
-	$("#loggedin").show();
-	$("#token").append(token);
-	$("#login").hide();
-}
-
-function showLogin() {
-	$("#loggedin").hide();
-	$("#login").show();
-}
-
-function logout() {
-	Cookies.remove('token');
-	showLogin();
-}
-
-function login(name, password) {
-    var args = "grant_type=password&username="+name+"&password="+password;
-
-    var url = '/'+ORG+'/'+APP+'/token';
-
-    http(url, 'GET', args, function (data) {
-    	var token = data.access_token;
-
-		Cookies.set('token', token, { expires: 30 })
-		showToken(token);
-	});
-}
-
 function createUser(username, callback) {
    	var postData = {
         'username': username,
@@ -140,9 +108,7 @@ function createUser(username, callback) {
     http(url, 'POST', JSON.stringify(postData), function (data) {
  		var len = data.entities.length;
 		for (var i=0; i < len; i++) {
-			var e = data.entities[i];
-			//function Person(uuid, name, bday, email, image) {
-			var person = new Person(e.uuid, e.username, e.birthday, e.email, e.picture);
+			var person = personFromEntity(data.entities[i]);
 			
 			callback(person);
 		}
@@ -164,7 +130,7 @@ function saveUser(id, username, bday, email, imgUrl, callback) {
 function http(url, method, data, callback) {
 
 	var headers = null;
-	if (method == 'POST') {
+	if (method == 'POST' || method == 'PUT') {
 		headers = {
 			'Content-Type': 'application/json'		
 		};
@@ -184,12 +150,12 @@ function http(url, method, data, callback) {
 		headers: headers,
 		dataType: "json"
 	})
-		.done(function(data, status, xhr) {
+		.done(function(resp, status, xhr) {
 			if (method != 'GET') {
-				console.log("XHR: " + xhr.responseText);
-				console.log("Data: " + JSON.stringify(data, null, 2));
+				console.log("Post Data: " + data);
+				console.log("Response: " + JSON.stringify(resp, null, 2));
 			}
-			callback(data);
+			callback(resp);
 		})
 		.fail(function(xhr, status, err) {
 			alert("Fail to "+method+": " + status +", " + err + ", "+ xhr.responseText);

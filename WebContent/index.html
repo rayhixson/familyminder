@@ -35,7 +35,6 @@
 <script>
     $(".fancybox")
     .attr('rel', 'gallery')
-    /*
     .fancybox({
         beforeLoad: function() {
             var el, id = $(this.element).data('title-id');
@@ -49,23 +48,23 @@
             }
         }
     });
-    */
 </script>
 
 <script>
     $(document).ready(function() {
-    	$("#login-widget").load("login-widget.html");
     	
         //draw(dad);
 
  //       $("div.callout").hide();
-        $("div").each(function() {  
+        $("div").each(function() {
+        	/*
             if ($(this).attr('class') === "childSpace")  {
                 $(this).prepend("<span class='childLabel'> Child </span>")
             }
             if ($(this).attr('class') === "childSpouse")  {
                 $(this).prepend("<span class='childSpouseLabel' style='display: block;'> Spouse </span>")
             }
+        	*/
             if ($(this).attr('class') === "grandchild")  {
                 $(this).prepend("<span class='grandchildLabel' style='display: block;'> Grandchild </span>")
             }
@@ -108,35 +107,68 @@
 <div class="container">
     <div class="mainContent">
     	<div class='mainLevel'>
-    		<div class='mainPerson'>
-    			<div data-bind="attr: { id: dad.uuid }" class="person">
-				<a class='fancybox' data-bind="attr: { 'data-title-id': dad.dataTitle, href: dad.secondImage }">
-                <img data-bind="attr: { src: dad.mainImage }" class='img-circle' style='display:block'></a>
-                	<div data-bind="attr: { id: dad.dataTitle }">
-                    	<div data-bind="text: dad.bday" class='callouttext'></div>
-                        <div class="mailto"><a data-bind="attr: { href: dad.mailTo }">email</a></div>
-                    </div>
-                </div>
-    			<div class='hidden'></div>
-        		<div data-bind="visible: dad.spouse" class='mainPerson'>
-        		<div data-bind="attr {id: data.spouse.uuid}" class='person'> </div>
-        	</div>
-    	</div>
-<!-- 
-    for (i in p.kids) {
-        s = drawKid(this, p.kids[i]);
-        $(".mainContent").append(s);
-    }
- -->    
-    
+    		<div class='mainPerson' data-bind="with: dad">
+				<div data-bind="template: {name: 'person-template', data: $data}"></div>
+       			<div data-bind="visible: spouse" class='mainPerson'>
+       				<div data-bind="attr {id: spouse.uuid}" class='person'> </div>
+       			</div>
+			</div>
+		</div>
+
+		<div data-bind="with: dad">
+			<div data-bind="template: {name: 'child-template', foreach: kids}"></div>
+		</div>
     </div>
-    <div style="min-height: 20px"></div>
+    
+	<div style="min-height: 20px"></div>
 </div>
 
 <footer>
-  <span class=col-sm-3></span><span class="col-sm-6" style="text-align: center"><p>Posted by: Tony Alferez</p>
-  <p>Contact information: <a href="mailto:info@glassbeadinc.com">tony@gbservices.com</a>.</p></span><span class="col-sm-3"></span>
+	<span class="col-sm-3"></span>
+	<span class="col-sm-6" style="text-align: center">Posted by: Tony Alferez<br/>
+	Contact information: <a href="mailto:info@glassbeadinc.com">tony@gbservices.com</a>.</span>
+	<span class="col-sm-3"></span>
 </footer>
+
+<!-- START person template -->
+<script type="text/html" id="person-template">
+	<a class='fancybox' data-bind="attr: { 'data-title-id': dataTitle, href: secondImage }">
+	<img data-bind="attr: { src: mainImage }" class='img-circle' style='display:block'></a>
+	<a data-bind="attr: { href: mailTo }"><span data-bind="text: username" class='divName'></span></a>
+	<div><span data-bind="text: bday" class='divBDay'></span></div>
+</script>
+
+<!-- START kid template  -->
+<script type="text/html" id="child-template">
+   	<div data-bind="attr: {id: id}" class='childSpace'>
+	   	<span class='childLabel'>Child</span>
+   		<div class='child'>
+   			<div data-bind="attr: {id: id}" class='person'>
+   				<div data-bind="template: {name: 'person-template', data: $data}"></div>
+			</div>
+		</div>
+	</div>
+
+	<div data-bind="attr: {id: spouse.id}, visible: spouse" class='childSpouse'>
+		<span class='childSpouseLabel' style='display: block;'>Spouse</span>
+		<span class='divCSName' style='font-family: Arial, sans-serif'></span>
+		<div data-bind="attr: {id: spouse.id}" class='person'>
+			<div data-bind="{template: {name: 'person-template', data: spouse}"></div>
+		</div>
+		<span data-bind="text: spouse.id" class='divName' 
+			style='font-family: Arial, sans-serif; display: block;'></span>
+		<span data-bind="text: spouse.bday" class='divBDay' 
+			style='font-family: Arial, sans-serif'></span>
+	</div>
+
+	<!-- div data-bind="template: {name: 'grandkid-template', foreach: kids}"></div -->    
+</script>
+
+<!-- END kid template -->
+
+<!-- START grandkid template -->
+
+<!-- END grandkid template -->
 
     <script src="family.js"></script>
 </body>
