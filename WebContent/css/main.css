@@ -1,16 +1,29 @@
 body {
     background-color: #fff;
+    min-height: 2000px;
+    padding-top: 70px;
+    margin-bottom: 60px;
 }
-div.container {
+div {
+    border: 1px solid black;
+}
+div.minder-container {
     background-color: #fff;
     color: steelblue;
     font-weight: 500;
+    height: 100%;
     border-bottom-left-radius: 10%;
     border-bottom-right-radius: 10%;
     border-top-left-radius: 10%;
     border-top-right-radius: 10%;
     margin-bottom: 5px;
     margin-top: 10px;
+    text-align: center;
+}
+div.edit-button {
+    display: inline-block;
+}
+div.edit-button-panel {
 }
 
 table, th, td {
@@ -49,7 +62,7 @@ div.mainPerson img {
 }
 div.person{
     font-family: Arial, sans-serif;
-/*  border-radius: 100%;
+    /*  border-radius: 100%;
     border: 1px solid black;*/
     display: inline-block;
     overflow: hidden;
@@ -57,6 +70,7 @@ div.person{
 div.person img {
     border: 1px solid black;
 }
+/*
 div.mainContent {
     margin: auto;
     text-align: center;
@@ -66,6 +80,7 @@ div.mainLevel {
     text-align: center;
     padding-top: 35px;
 }
+*/
 div.childSpace{
     margin: 3px;
     width: 19%;
@@ -78,12 +93,12 @@ div.childSpace{
 }
 div.child {
     max-height: 120px;
-    margin-bottom: 15px;
+    margin-bottom: 35px;
     display: block;
     position: relative;
 }
 div.child img {
-    height: 100%;
+    height: 130px;
 }
 div.childSpouse {
     padding-bottom: 5px;
@@ -94,7 +109,7 @@ div.childSpouse {
     margin-bottom: 15px;
 }
 div.childSpouse img {
-    height: 100%;
+    height: 100px;
 }
 div.grandchildSpace{
     border: 1px solid grey;
@@ -165,15 +180,15 @@ span.greatGrandchildLabel {
     font-size: .8em;
     font-style: italic;
 }
+.top-buffer {
+    margin-top: 40px;
+}
+
 /* Sticky footer styles
 -------------------------------------------------- */
 html {
   position: relative;
   min-height: 100%;
-}
-body {
-  /* Margin bottom by footer height */
-  margin-bottom: 60px;
 }
 .footer {
   position: absolute;
@@ -190,12 +205,9 @@ body {
     width: 250px;
     background-color: purple;
 }
-    .hidden {
+.hidden {
  display: none;   
 }
 .fancybox-title a {
  color: #fff;        
-}
-body {
- padding: 20px;   
 }

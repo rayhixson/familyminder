@@ -1,175 +1,489 @@
-<html>
-<head>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+	<meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
     <title>Granny Minder</title>
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/x-icon" href="favicon.ico"/>
     
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.3.0/knockout-min.js"></script>
-	
-	<script src="source/js.cookie.js"></script>
+    <script src="source/jquery-1.11.3.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js" defer="defer"></script>
+	<script src="http://knockoutjs.com/downloads/knockout-3.3.0.debug.js"></script>
+    <!-- For navigation -->
+    <script src="source/sammy.js" defer="defer"></script>
+    <!-- Usergrid client lib (db) -->
+    <script src="source/usergrid.js"></script>
+    
+    <!-- Add mousewheel plugin (this is optional) -->
+    <script type="text/javascript" src="source/jquery.mousewheel-3.0.6.pack.js" defer="defer"></script>
+    <script type="text/javascript" src="source/jquery.fancybox.pack.js?v=2.1.5"></script>
+    <script type="text/javascript" src="source/helpers/jquery.fancybox-buttons.js?v=1.0.5" defer="defer"></script>
+    <script type="text/javascript" src="source/helpers/jquery.fancybox-media.js?v=1.0.6" defer="defer"></script>
+    <script type="text/javascript" src="source/helpers/jquery.fancybox-thumbs.js?v=1.0.7" defer="defer"></script>
 
-	<script src="usergrid-utilities.js"></script>
 
-    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
-    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"/>
+    <!-- Add fancyBox -->
+    <link rel="stylesheet" href="source/jquery.fancybox.css?v=2.1.5" type="text/css" media="screen" />
+    <!-- Optionally add helpers - button, thumbnail and/or media -->
+    <link rel="stylesheet" href="source/helpers/jquery.fancybox-buttons.css?v=1.0.5" type="text/css" media="screen" />
+    <link rel="stylesheet" href="source/helpers/jquery.fancybox-thumbs.css?v=1.0.7" type="text/css" media="screen" />
 
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Our CSS -->
+    <link rel="stylesheet" type="text/css" href="css/main.css"/>
 
-<!-- Add mousewheel plugin (this is optional) -->
-<script type="text/javascript" src="source/jquery.mousewheel-3.0.6.pack.js"></script>
-       
-<!-- Add fancyBox -->
-<link rel="stylesheet" href="source/jquery.fancybox.css?v=2.1.5" type="text/css" media="screen" />
-<script type="text/javascript" src="source/jquery.fancybox.pack.js?v=2.1.5"></script>
+    <script>
+      $(".fancybox")
+      .attr("rel", "gallery")
+      .fancybox({
+          beforeLoad: function() {
+              var el, id = $(this.element).data("title-id");
+              
+              if (id) {
+                  el = $("#" + id);
+      
+                  if (el.length) {
+                      this.title = "Heres the title!!!"; //el.html();
+                  }
+              }
+          }
+      });
 
-<!-- Optionally add helpers - button, thumbnail and/or media -->
-<link rel="stylesheet" href="source/helpers/jquery.fancybox-buttons.css?v=1.0.5" type="text/css" media="screen" />
-<script type="text/javascript" src="source/helpers/jquery.fancybox-buttons.js?v=1.0.5"></script>
-<script type="text/javascript" src="source/helpers/jquery.fancybox-media.js?v=1.0.6"></script>
+      $(document).ready(function() {
+          // cannot get this fucker to work
+          $(".modal").on('shown.bs.modal', function() {
+              console.log("Looking");
+              $(this).find("[autofocus]").focus();
+          });
+      });
+    </script>
 
-<link rel="stylesheet" href="source/helpers/jquery.fancybox-thumbs.css?v=1.0.7" type="text/css" media="screen" />
-<script type="text/javascript" src="source/helpers/jquery.fancybox-thumbs.js?v=1.0.7"></script>
+  </head>
+  <body>
 
-<script>
-    $(".fancybox")
-    .attr('rel', 'gallery')
-    .fancybox({
-        beforeLoad: function() {
-            var el, id = $(this.element).data('title-id');
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container minder-container">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="http://www.glassbeadinc.com/tree">Family &apos;Minder</a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="#">Help</a></li>
+            <li><a href="mailto:info@glassbeadinc.com">Contact Me</a></li>
+            <li><a href="#" data-bind="click: logout">Logout</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="#" data-bind="click: toggleMode, text: modeText"></a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
 
-            if (id) {
-                el = $('#' + id);
+    <!-- ******************************* -->
+    <!-- ***** BEGIN LOGIN SECTION ***** -->
+    <!-- ******************************* -->
+
+    <section id="login">
+      <div data-bind="template: {name: 'error-alert-template'}"></div>
+
+      <div class="container minder-container" data-bind="if: !userLoggedIn()">
+        <div class="panel panel-default">
+	      <div class="panel-heading">
+	        <h3 class="panel-title">Login to see Existing Family</h3>
+	      </div>
+	      <div class="panel-body">
+	        <form class="form-horizontal" role="form" data-bind="submit: login" >
+		      <div class="form-group">
+		        <label class="control-label col-sm-3" for="familyname">Family Name</label>
+		        <div class="col-sm-9">
+			      <input data-bind="value: familyName" class="form-control" id="familyname"/>
+		        </div>
+		      </div>
+		      <div class="form-group">
+		        <label class="control-label col-sm-3" for="name">Family Admin Name</label>
+		        <div class="col-sm-9">
+			      <input data-bind="value: familyAdminName" class="form-control" id="name"/>
+		        </div>
+		      </div>
+		      <div class="form-group">
+		        <label class="control-label col-sm-3" for="password">Family Admin Password</label>
+		        <div class="col-sm-9">
+			      <input type="password" data-bind="value: familyAdminPassword" class="form-control" id="password"/>
+		        </div>
+		      </div>
+		      <div class="form-group">
+		        <div class="col-sm-offset-2 col-sm-2">
+			      <button type="submit" class="btn btn-primary">Login</button>
+		        </div>
+		      </div>
+	        </form>
+	      </div>
+        </div>
+	    
+	    <div class="panel panel-default">
+		  <div class="panel-heading">
+		    <h3 class="panel-title">Create New Family</h3>
+		  </div>
+	      
+	      <div class="panel-body">
+	        <form class="form-horizontal" role="form" data-bind="submit: createFamily" >
+		      <div class="form-group">
+			    <label class="control-label col-sm-2" for="name">Minder Admin Name</label>
+			    <div class="col-sm-10">
+				  <input data-bind="value: minderAdminName" class="form-control" id="name"/>
+			    </div>
+		      </div>
+		      <div class="form-group">
+			    <label class="control-label col-sm-2" for="password">Minder Admin Password</label>
+			    <div class="col-sm-10">
+				  <input data-bind="value: minderAdminPassword" class="form-control" id="password"/>
+			    </div>
+		      </div>
+		      <div class="form-group">
+			    <label class="control-label col-sm-2" for="familyname">New Family Name</label>
+			    <div class="col-sm-10">
+				  <input data-bind="value: familyName" class="form-control" id="familyname"/>
+			    </div>
+		      </div>
+		      <div class="form-group">
+			    <label class="control-label col-sm-2" for="name">Family Admin Name</label>
+			    <div class="col-sm-10">
+				  <input data-bind="value: familyAdminName" class="form-control" id="name"/>
+			    </div>
+		      </div>
+		      <div class="form-group">
+			    <label class="control-label col-sm-2" for="adminpassword">Family Admin Password</label>
+			    <div class="col-sm-10">
+				  <input data-bind="value: familyAdminPassword" class="form-control" id="adminpassword"/>
+			    </div>
+		      </div>
+		      <div class="form-group">
+			    <div class="col-sm-offset-2 col-sm-2">
+				  <button type="submit" class="btn btn-primary">Create New Family</button>
+			    </div>
+		      </div>
+	        </form>
+	      </div>
+	    </div>
+	    
+      </div>
+    </section>
+
+    <!-- ******************************* -->
+    <!-- ***** BEGIN FAMILY TREE DISPLAY SECTION ***** -->
+    <!-- ******************************* -->
+
+    <section id="display-tree" data-bind="with: personViewModel">
+      <div class="container minder-container">
+        <div data-bind="with: dad">
+    	  <div class="mainPerson">
+			<div class="person" data-bind="template: {name: 'person-template', data: dad}"></div>
             
-                if (el.length) {
-                    this.title = el.html();
-                }
-            }
-        }
-    });
-</script>
-
-<script>
-    $(document).ready(function() {
-    	
-        //draw(dad);
-
- //       $("div.callout").hide();
-        $("div").each(function() {
-        	/*
-            if ($(this).attr('class') === "childSpace")  {
-                $(this).prepend("<span class='childLabel'> Child </span>")
-            }
-            if ($(this).attr('class') === "childSpouse")  {
-                $(this).prepend("<span class='childSpouseLabel' style='display: block;'> Spouse </span>")
-            }
-        	*/
-            if ($(this).attr('class') === "grandchild")  {
-                $(this).prepend("<span class='grandchildLabel' style='display: block;'> Grandchild </span>")
-            }
-            if ($(this).attr('class') === "grandchildSpouse")  {
-                $(this).prepend("<span class='childLabel' style='display: block;'> Spouse </span>")
-            }
-            if ($(this).attr('class') === "greatGrandchild")  {
-                $(this).prepend("<span class='greatGrandchildLabel' style='display: block;'> Great Grandchild </span>")
-            }
-            /*
-            if ($(this).attr('class') === "person") {
-                $(this).append("<a class='fancybox' data-title-id='title-"+$(this).attr('id')+"' href='images/"+$(this).attr('id')+"2.jpg'>\
-                               <img src='images/"+ $(this).attr('id') +".jpg' class='img-circle' style='display:block'></a>\
-                                <div id='title-"+$(this).attr('id')+"' class='hidden'>\
-                                <div class='callouttext'>"+$(this).attr('id')+" Mar 28</div>\
-                                <div style=class='mailto' ><a href='mailto:"+$(this).attr('id')+"'>email</a></div>\
-                            </div>\
-                ")
-            }
-            */
-        });
-    });
-</script>
-</head>
-<body>
-
-<nav class="navbar navbar-default navbar-fixed-top">
-  <div class="container">
-    <div class="navbar-header">
-      <a class="navbar-brand" href="http://www.glassbeadinc.com/tree">Family 'Minder</a>
-    </div>
-    <div>
-      <ul class="nav nav-pills">
-        <li><a href="#">Help</a></li>
-        <li><a href="mailto:info@glassbeadinc.com">Contact Me</a></li>
-      </ul>
-    </div>
-  </div>
-</nav>
-<div class="container">
-    <div class="mainContent">
-    	<div class='mainLevel'>
-    		<div class='mainPerson' data-bind="with: dad">
-				<div data-bind="template: {name: 'person-template', data: $data}"></div>
-       			<div data-bind="visible: spouse" class='mainPerson'>
-       				<div data-bind="attr {id: spouse.uuid}" class='person'> </div>
-       			</div>
-			</div>
-		</div>
-
+		  </div>
+		  <div class="mainPerson" data-bind="if: spouse">
+			<div class="person" data-bind="template: {name: 'person-template', data: spouse}"></div>
+		  </div>
+        </div>
+        
 		<div data-bind="with: dad">
-			<div data-bind="template: {name: 'child-template', foreach: kids}"></div>
+		  <div data-bind="template: {name: 'child-template', foreach: kids, as: 'kid'}"></div>
 		</div>
-    </div>
+      </div>
+        
+      <footer>
+	    <span class="col-sm-3"></span>
+	    <span class="col-sm-6" style="text-align: center">Posted by: Tony Alferez<br/>
+	      Contact information: <a href="mailto:info@glassbeadinc.com">tony@gbservices.com</a>.</span>
+	    <span class="col-sm-3"></span>
+      </footer>
+      
+      <!-- START person template -->
+      <script type="text/html" id="person-template">
+        <a class="fancybox" data-bind='attr: { "title": username(), href: "images/" + id() + "2.jpg" }'>
+          <img data-bind="attr: { src: image }" class="img-circle">
+        </a>
+        <a data-bind='attr: { href: "mailto:" + email() }'>
+          <span data-bind="text: username" class="divName"></span>
+        </a>
+
+        <div>
+          <span data-bind="text: bday" class="divBDay"></span>
+        </div>
+        
+        <div data-bind="if: $root.editMode">
+          <div class="edit-button-panel"
+               data-bind="template: {name: 'edit-options-template'}"></div>
+        </div>
+      </script>
+      
+      <script type="text/html" id="spouse-template">
+        <div data-bind="attr: {id: id}" class="childSpouse">
+          <span class="childSpouseLabel">Spouse</span>
+          <div data-bind="attr: {id: id}" class="person">
+            <div class="person" data-bind="template: {name: 'person-template'}"></div>
+          </div>
+        </div>
+      </script>
+      
+      <!-- START kid template  -->
+      <script type="text/html" id="child-template">
+        <div data-bind="attr: {id: id}" class="childSpace">
+          <span class="childLabel">Child</span>
+          <div class="child">
+            <div data-bind="attr: {id: id}" class="person">
+              <div class="person" data-bind="template: {name: 'person-template'}"></div>
+            </div>
+          </div>
+        
+          <div data-bind="template: {name: 'spouse-template', if: spouse, data: spouse}"></div>
+        
+          <div data-bind="template: {name: 'grandkid-template', foreach: kids}"></div>    
+        </div>
+      </script>
+      <!-- END kid template -->
+      
+      <!-- START grandkid template -->
+      <script type="text/html" id="grandkid-template">
+        <div data-bind="attr: {id: id}" class="grandchildSpace">
+          <span class="grandchildLabel">Grandchild</span>
+          <span class="divGCName"></span>
+          <div class="grandchild">
+            <div data-bind="attr: {id: id}" class="person">
+              <div class="person" data-bind="template: {name: 'person-template'}"></div>
+            </div>
+          </div>
+          
+          <div data-bind="template: {name: 'spouse-template', if: spouse, data: spouse}"></div>
+          
+          <div data-bind="template: {name: 'greatgrandkid-template', foreach: kids}"></div>
+        </div>
+      </script>
+      <!-- END grandkid template -->
+      
+      <!-- START greatgrandkid template -->
+      <script type="text/html" id="greatgrandkid-template">
+        <div data-bind="attr: {id: id}" class="greatGrandchild">
+          <span class="greatGrandchildLabel">Great Grandchild</span>
+          <div data-bind="attr: {id: id}" class="person">
+            <div class="person" data-bind="template: {name: 'person-template'}"></div>
+          </div>
+          
+          <div data-bind="template: {if: spouse, name: 'spouse-template', data: spouse}"></div>
+        </div>
+      </script>
+      <!-- END greatgrandkid template -->
+
+      <!-- START edit-options template -->
+      <script type="text/html" id="edit-options-template">
+        <div class="edit-button"
+             data-bind="template: {name: 'edit-person-template'}"></div>
+        <div class="edit-button" data-bind="if: !isSpouse()">
+          <div data-bind="template: {name: 'add-kid-template'}"></div>
+        </div>
+        <div class="edit-button" data-bind="if: !spouseLink() && !isSpouse()">
+          <div data-bind="template: {name: 'add-spouse-template'}"></div>
+        </div>
+        <div class="edit-button" data-bind="if: parent()">
+          <div data-bind="template: {name: 'delete-person-template'}"></div>
+        </div>
+      </script>
+      <!-- END edit-options template -->
+
+      <!-- START edit-person template -->
+      <script type="text/html" id="edit-person-template">
+        <button type="button" class="btn btn-info btn-xs" data-toggle="modal"
+                data-bind="attr: {'data-target': '#editPerson-' + uuid()}">Edit</button>
+        <div class="modal fade" role="dialog" data-keyboard="true"
+             data-bind="dismissModal: okToClose, attr: {'id': 'editPerson-' + uuid()}">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form role="form" data-bind="submit: savePerson">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                  <h4 class="modal-title" data-bind='text: "Edit " + username()'></h4>
+                </div>
+                
+                <div class="modal-body">
+			      <div class="row">
+			        <div class="col-sm-12">
+				      <div class="form-group">
+					    <label class="control-label col-sm-2" for="username">Name:</label>
+					    <div class="col-sm-10">
+						  <input data-bind="value: username" class="form-control" id="username"
+                                 autofocus=""/>
+					    </div>
+				      </div>
+				      <div class="form-group">
+					    <label class="control-label col-sm-2" for="email">Email:</label>
+					    <div class="col-sm-10">
+						  <input data-bind="value: email" type="email" class="form-control" id="email"/>
+					    </div>
+				      </div>
+				      <div class="form-group">
+					    <label class="control-label col-sm-2" for="bday">Birthday:</label>
+					    <div class="col-sm-10">
+						  <input data-bind="value: bday" class="form-control" id="bday"/>
+					    </div>
+				      </div>
+				      <div class="form-group">
+					    <label class="control-label col-sm-2" for="image">Img Url:</label>
+					    <div class="col-sm-10">
+						  <input data-bind="value: image" class="form-control" id="image"/>
+					    </div>
+				      </div>
+			        </div>
+			      </div>
+                </div>
+                
+                <div data-bind="template: {name: 'error-alert-template'}"></div>
+                
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary"
+                          data-bind="click: savePerson">Save</button>
+                  <button type="button" class="btn btn-default"
+                          data-dismiss="modal">Close</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </script>
+      <!-- END edit-person template -->
+
+      <!-- START add-kid template -->
+      <script type="text/html" id="add-kid-template">
+        <button type="button" class="btn btn-info btn-xs" data-toggle="modal"
+                data-bind="attr: {'data-target': '#addKid-' + uuid()}">+Child</button>
+        <div id="addKid" class="modal fade" role="dialog" data-keyboard="true"
+             data-bind="dismissModal: okToClose, attr: {id: 'addKid-' + uuid()}">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form role="form" data-bind="submit: addKid">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                  <h4 class="modal-title" data-bind='text: "Add Child to " + username()'></h4>
+                </div>
+                
+                <div class="modal-body">
+			      <div class="row">
+			        <div class="col-sm-12">
+			          
+				      <div class="form-group">
+					    <label class="control-label col-sm-2" for="username">Name:</label>
+					    <div class="col-sm-10">
+						  <input data-bind="value: newChildUsername" class="form-control"
+                                 autofocus="" id="username"/>
+					    </div>
+				      </div>
+			        </div>
+			      </div>
+
+                  <div data-bind="template: {name: 'error-alert-template'}"></div>
+                  
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary">Create Child</button>
+                  <button type="button" class="btn btn-default"
+                          data-dismiss="modal">Close</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </script>
+      <!-- END add-kid template -->
+
+      <!-- START add-spouse template -->
+      <script type="text/html" id="add-spouse-template">
+        <button type="button" class="btn btn-info btn-xs" data-toggle="modal"
+                data-bind="attr: {'data-target': '#addSpouse-' + uuid()}">+Spouse</button>
+        <div id="addSpouse" class="modal fade" role="dialog" data-keyboard="true"
+             data-bind="dismissModal: okToClose, attr: {id: 'addSpouse-' + uuid()}">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form role="form" data-bind="submit: addSpouse">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                  <h4 class="modal-title" data-bind='text: "Add Spouse to " + username()'></h4>
+                </div>
+                
+                <div class="modal-body">
+			      <div class="row">
+			        <div class="col-sm-12">
+			          
+			          <form class="form-horizontal" role="form">
+				        <div class="form-group">
+					      <label class="control-label col-sm-2" for="username">Name:</label>
+					      <div class="col-sm-10">
+						    <input data-bind="value: newSpouseUsername" class="form-control"
+                                   autofocus="" id="username"/>
+					      </div>
+				        </div>
+			          </form>
+			        </div>
+			      </div>
+                </div>
+                
+                <div data-bind="template: {name: 'error-alert-template'}"></div>
+                  
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary"
+                          data-dismiss="modal">Create Spouse</button>
+                  <button type="button" class="btn btn-default"
+                          data-dismiss="modal">Close</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </script>
+      <!-- END add-spouse template -->
+
+      <!-- START delete-person template -->
+      <script type="text/html" id="delete-person-template">
+        <button type="button" class="btn btn-info btn-xs"
+                data-toggle="modal"
+                data-bind="attr: {'data-target': '#confirmDelete-' + uuid()}">Del</button>
+        <div class="modal fade" role="dialog" data-keyboard="true"
+             data-bind="dismissModal: okToClose, attr: {id: 'confirmDelete-' + uuid()}">
+          <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-body" data-bind="text: 'Delete ' + username() + '?'"></div>
+                
+                <div data-bind="template: {name: 'error-alert-template'}"></div>
+
+                <div class="modal-footer">
+                  <form role="form" data-bind="submit: deletePerson">
+                    <button type="submit" class="btn btn-primary"
+                            autofocus="autofocus">Delete</button>
+                    <button type="button" class="btn btn-default"
+                            data-dismiss="modal">Cancel</button>
+                  </form>
+                </div>
+            </div>
+          </div>
+        </div>
+      </script>
+      <!-- END delete-person template -->
+      
+      <script type="text/html" id="error-alert-template">
+        <div class="row top-buffer" data-bind="visible: showErrorAlert">
+	      <div class="col-sm-12">
+	        <div class="alert alert-danger">
+   		      <button type="button" class="close"
+                      data-bind="click: stopShowErrorAlert">&times;</button>
+   		      <strong data-bind="text: errorMessage"></strong>
+	        </div>
+	      </div>
+        </div>
+      </script>          
+      
+    </section>
     
-	<div style="min-height: 20px"></div>
-</div>
+    <!-- OUR CODE -->
+    <script src="person.js"></script>
+    <script src="admin.js"></script>
 
-<footer>
-	<span class="col-sm-3"></span>
-	<span class="col-sm-6" style="text-align: center">Posted by: Tony Alferez<br/>
-	Contact information: <a href="mailto:info@glassbeadinc.com">tony@gbservices.com</a>.</span>
-	<span class="col-sm-3"></span>
-</footer>
-
-<!-- START person template -->
-<script type="text/html" id="person-template">
-	<a class='fancybox' data-bind="attr: { 'data-title-id': dataTitle, href: secondImage }">
-	<img data-bind="attr: { src: mainImage }" class='img-circle' style='display:block'></a>
-	<a data-bind="attr: { href: mailTo }"><span data-bind="text: username" class='divName'></span></a>
-	<div><span data-bind="text: bday" class='divBDay'></span></div>
-</script>
-
-<!-- START kid template  -->
-<script type="text/html" id="child-template">
-   	<div data-bind="attr: {id: id}" class='childSpace'>
-	   	<span class='childLabel'>Child</span>
-   		<div class='child'>
-   			<div data-bind="attr: {id: id}" class='person'>
-   				<div data-bind="template: {name: 'person-template', data: $data}"></div>
-			</div>
-		</div>
-	</div>
-
-	<div data-bind="attr: {id: spouse.id}, visible: spouse" class='childSpouse'>
-		<span class='childSpouseLabel' style='display: block;'>Spouse</span>
-		<span class='divCSName' style='font-family: Arial, sans-serif'></span>
-		<div data-bind="attr: {id: spouse.id}" class='person'>
-			<div data-bind="{template: {name: 'person-template', data: spouse}"></div>
-		</div>
-		<span data-bind="text: spouse.id" class='divName' 
-			style='font-family: Arial, sans-serif; display: block;'></span>
-		<span data-bind="text: spouse.bday" class='divBDay' 
-			style='font-family: Arial, sans-serif'></span>
-	</div>
-
-	<!-- div data-bind="template: {name: 'grandkid-template', foreach: kids}"></div -->    
-</script>
-
-<!-- END kid template -->
-
-<!-- START grandkid template -->
-
-<!-- END grandkid template -->
-
-    <script src="family.js"></script>
-</body>
+  </body>
 </html>
