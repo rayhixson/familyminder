@@ -2,7 +2,8 @@
 
 function personFromEntity(entity, parent, adminView) {
 	var p = new Person(entity.uuid, entity.username, entity.birthday, 
-			           entity.email, entity.picture, adminView);
+			           entity.email, entity.picture, entity.image2,
+                       adminView);
 
 	if (entity.metadata.connections) {
 		if (entity.metadata.connections.children) {
@@ -24,14 +25,16 @@ function personFromEntity(entity, parent, adminView) {
 	return p;
 }
 
-function Person(uuid, name, bday, email, img, adminView) {
+function Person(uuid, name, bday, email, img, img2, adminView) {
 	var self = this;
-    self.id = ko.observable(name.toLowerCase());
     self.uuid = ko.observable(uuid);
     self.username = ko.observable(name);
     self.bday = ko.observable(bday);
     self.email = ko.observable(email);
     self.image = ko.observable(img ? img : 'images/default.jpg');
+    self.image2 = ko.observable(img2 ? img2 : 'images/default.jpg');
+    // WARNING: the existence of these links does not mean that
+    // the relationship exists - it means it did at one time
     self.kidsLink = ko.observable("");
     self.spouseLink = ko.observable("");
     self.isSpouse = ko.observable(false);
@@ -50,6 +53,27 @@ function Person(uuid, name, bday, email, img, adminView) {
     self.showAlert = ko.observable(false);
     self.showErrorAlert = ko.observable(false);
     self.errorMessage = ko.observable();
+
+    // Logic about the data model we are imposing:
+    self.canHaveKids = ko.pureComputed(function() {
+        // Spouses can't have kids
+        return !self.isSpouse();
+    });
+
+    self.canHaveSpouse = ko.pureComputed(function() {
+        // can't have a spouse if they already have one
+        // or are themselves a spouse
+        return (!self.spouse() && !self.isSpouse());
+    });
+
+    self.canBeDeleted = ko.pureComputed(function() {
+        // don't delete dad (the root person)
+        // or anyone with kids
+        // dad and spouses don't have a parent
+        // so if they have a dad or are a spouse then it's ok to delete
+        var haveDependents = self.kids().length > 0 || self.spouse();
+        return (self.parent() || self.isSpouse()) && !haveDependents;
+    });
 
     // An Array of Person objects
     self.kids = ko.observableArray([]);
@@ -122,15 +146,9 @@ function Person(uuid, name, bday, email, img, adminView) {
                 self.closeModal();
             }
 		});
-/*
-		self.addSpouseRelation(function() {
-			self.derefRelations(self);
-		});
-*/
 	};
 
 	self.deletePerson = function() {
-        alert("TRYING>>>");
         var options = {
             method: 'DELETE',
             endpoint: 'users/' + self.uuid()
@@ -146,64 +164,13 @@ function Person(uuid, name, bday, email, img, adminView) {
         });
 	};
 
-    self.removeCurrentSpouseRelation = function(callback) { 
-        // remove the current spouse to make room for a new one
-        if (self.spouse()) {
-            var options = {
-                method: 'DELETE',
-                endpoint: self.spouseLink() + '/' + self.spouse().uuid()
-            };
-
-            self.adminView.ugClient.request(options, function(err, data) {
-                if (err) {
-                    self.handleError(err);
-                }
-                callback();
-            });
-        }
-    };
-
-    /**
-     * OLD STYLE - DELETE
-     * Will first delete the old spouse relation if there is one 
-     * @param person Person object
-     * @param spouseUuid String of the uuid for a person
-     * @param callback
-     * @returns {Boolean}
-     */
-    self.addSpouseRelation = function(callback) {
-	    if (self.uuid() == self.spouseUuid()) {
-		    alert("One cannot spouse oneself.");
-		    return false;
-	    }
-
-	    self.removeCurrentSpouseRelation();
-	    
-	    // if it's 'undefined' then this is just a delete
-	    if (self.spouseUuid() && !self.spouseUuid().startsWith("undefined")) {
-            var options = {
-                method: 'POST',
-                endpoint: 'users/' + self.uuid() + '/spouse/' + self.spouseUuid()
-                // data: null
-            };
-
-            self.adminView.ugClient.request(options, function(err, data) {
-                if (err) {
-                    self.handleError(err);
-                } else {
-                    callback();
-                }
-            });
-	    }
-        return true;
-    };
-
     self.addSpouse = function() {
         // reset any previous error dialog
         self.stopShowErrorAlert();
 
         self.createPerson(self.newSpouseUsername(), function(person) {
 			self.spouse(person);
+            person.isSpouse(true);
 			self.newSpouseUsername(null);
 
             // then relate it to this parent
@@ -223,28 +190,6 @@ function Person(uuid, name, bday, email, img, adminView) {
         });
     };
 	
-    // OLD style - delete
-    self.makeChildRelation = function(parent) {
-        if (parent.uuid() == self.uuid()) {
-            throw new MinderError('One cannot father oneself.');
-            return false;
-        }
-
-        var options = {
-            method: 'POST',
-            endpoint: 'users/' + parent.uuid() + '/children/' + self.uuid()
-            // data: null
-        };
-
-        self.adminView.ugClient.request(options, function(err, data) {
-            if (err) {
-                self.handleError(err);
-            } else {
-    		    parent.kids.push(self);
-            }
-    	});
-    };
-
     self.addKid = function() {
         // reset any previous error dialog
         self.stopShowErrorAlert();
@@ -269,28 +214,6 @@ function Person(uuid, name, bday, email, img, adminView) {
                 }
             });
         });
-    };
-            
-    /**
-     * @param kid String kids' username
-     */
-    self.removeKid = function(kidUsername) {
-        var options = {
-            method: 'DELETE',
-            endpoint: 'users/' + self.uuid() + '/children/users/' + kidUsername
-        };
-
-        self.adminView.ugClient.request(options, function(err, data) {
-            if (err) {
-                self.handleError(err);
-            } else {
-                // deleted from db, now update the local
-                // collection of kids
-                self.kids.remove(function(k) {
-                    return k.username() == kidUsername;
-                });
-            }
-    	});
     };
 }
 
@@ -347,6 +270,7 @@ function PersonViewModel(adminView, dadsName) {
                         parent.kids.push(p);
 				        self.derefRelations(p);
 			        }
+
                 }
 		    });
 	    }
@@ -361,56 +285,36 @@ function PersonViewModel(adminView, dadsName) {
                 if (err) {
                     throw new MinderError(err);
                 } else {
-			        var p = personFromEntity(kdata.entities[0], null, self.adminView);
-			        parent.spouse(p);
-			        parent.spouseUuid(p.uuid());
+                    // broken spouse link?
+                    if (!kdata.entities[0]) {
+                        // this means they had a spouse but don't anymore
+                    } else {
+			            var p = personFromEntity(kdata.entities[0], null, self.adminView);
+			            parent.spouse(p);
+			            parent.spouseUuid(p.uuid());
+                    }
                 }
 		    });
 	    }
     };
-	/*
+
 	self.getAllPeople = function() {
-		getUsers(function(peoples) {
-			for (var i=0; i < peoples.length; i++) {
-				var p = peoples[i];
-				self.people.push(p);
-				derefRelations(p);
+        var options = {
+            type: "users"
+        };
+            
+        self.adminView.ugClient.createCollection(options, function(err, users) {
+            var ps = [];
+			for (var i=0; i < users.length; i++) {
+				var p = personFromEntity(users[i], null, self.adminView);
+				ps.push(p);
+				self.derefRelations(p);
 			}
+
 			self.updatePeopleNames();
 		});
 	};
-*/
 	
-	self.updatePeopleNames = function() {
-		var len = self.people().length;
-		self.peopleNames.push("");
-		for (var i=0; i < len; i++) {
-			self.peopleNames.push(self.people()[i].uuid);
-		}
-	};
-
-	// old style - can we delete?
-	self.addUser = function() {
-        var options = {
-            method: 'POST',
-            endpoint: 'users',
-            body: { 'username': self.newPersonName() }
-        };
-
-        self.adminView.ugClient.request(options, function(err, data) {
-            if (err) {
-                throw new MinderError(err);
-            } else {
-                if (data.entities.length > 0) {
-			        var person = personFromEntity(data.entities[0], null, self.adminView);
-			        self.people.push(person);
-			        self.updatePeopleNames();
-			        this.newPersonName = "";
-                }
-            }
-		});
-	};
-
     /*
      * This method traverses the family tree handling things that need to be
      * done after bootstrap has done modal closings.
@@ -423,6 +327,11 @@ function PersonViewModel(adminView, dadsName) {
     self.sweepPrivate = function(person) {
         for (var i=0; i < person.kids().length; i++) {
             self.sweepPrivate(person.kids()[i]);
+        }
+
+        if (person.spouse() && person.spouse().markedForDelete) {
+            person.spouse(null);
+            person.spouseLink(null);
         }
             
         person.kids.remove(function(k) {

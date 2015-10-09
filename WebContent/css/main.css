@@ -1,11 +1,7 @@
 body {
     background-color: #fff;
-    min-height: 2000px;
     padding-top: 70px;
     margin-bottom: 60px;
-}
-div {
-    border: 1px solid black;
 }
 div.minder-container {
     background-color: #fff;
@@ -51,6 +47,17 @@ h2 {
     font-size: x-small;
     color: midnightblue;
 }
+div.person{
+    font-family: Arial, sans-serif;
+    /*  border-radius: 100%;
+    border: 1px solid black;*/
+    display: inline-block;
+/*    overflow: hidden;*/
+    margin: auto;
+}
+div.person img {
+    border: 1px solid black;
+}
 div.mainPerson {
     margin: auto;
     text-align: center;
@@ -59,16 +66,6 @@ div.mainPerson {
 div.mainPerson img {
     height: 100px;
     margin: 5px;
-}
-div.person{
-    font-family: Arial, sans-serif;
-    /*  border-radius: 100%;
-    border: 1px solid black;*/
-    display: inline-block;
-    overflow: hidden;
-}
-div.person img {
-    border: 1px solid black;
 }
 /*
 div.mainContent {
@@ -92,10 +89,17 @@ div.childSpace{
     border-radius: 50px / 100px;
 }
 div.child {
-    max-height: 120px;
-    margin-bottom: 35px;
+/*
+Doing this gets the spouse closer to the child
+but doesn't allow for resizing when we add the edit
+buttons in editMode
+
+    max-height: 140px; 
+    margin-bottom: 5px;
+*/
     display: block;
     position: relative;
+/*    height: 155px;*/
 }
 div.child img {
     height: 130px;
@@ -104,27 +108,26 @@ div.childSpouse {
     padding-bottom: 5px;
     padding-left: 15px;
     padding-right: 15px;
-    max-height: 95px;
     text-align: right;
-    margin-bottom: 15px;
+    float: right;
+    /* height: 150px; */
 }
 div.childSpouse img {
     height: 100px;
 }
 div.grandchildSpace{
-    border: 1px solid grey;
+    border: 1px solid coral;
     background-color: transparent;
     width: 98%;
     display: inline-block;
     vertical-align: top;
     text-align: center;
-    border-radius: 20%;
-    margin-top:35px;
+    border-radius: 20px;
+    margin-top: 15px;
     margin-bottom: 15px;
     max-width: 45%;
     padding-bottom: 10px;
     padding-right: 5px;
-    
 }
 div.grandchild img {
    max-height: 85px;
@@ -138,14 +141,11 @@ div.greatGrandchild img {
     height: 40px;
 }
 div.grandchildSpouse {
-
     padding-bottom: 15px;
     float: right;
-
 }
 div.grandchildSpouse img {
     height: 75px;
-    
 }
 span.childLabel {
     position: relative;

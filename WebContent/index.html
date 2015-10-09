@@ -34,20 +34,8 @@
     <link rel="stylesheet" type="text/css" href="css/main.css"/>
 
     <script>
-      $(".fancybox")
-      .attr("rel", "gallery")
-      .fancybox({
-          beforeLoad: function() {
-              var el, id = $(this.element).data("title-id");
-              
-              if (id) {
-                  el = $("#" + id);
-      
-                  if (el.length) {
-                      this.title = "Heres the title!!!"; //el.html();
-                  }
-              }
-          }
+      $(".fancybox").fancybox({
+          'hideOnContentClick': false
       });
 
       $(document).ready(function() {
@@ -175,23 +163,19 @@
     <!-- ******************************* -->
 
     <section id="display-tree" data-bind="with: personViewModel">
-      <div class="container minder-container">
-        <div data-bind="with: dad">
-    	  <div class="mainPerson">
-			<div class="person" data-bind="template: {name: 'person-template', data: dad}"></div>
-            
-		  </div>
-		  <div class="mainPerson" data-bind="if: spouse">
-			<div class="person" data-bind="template: {name: 'person-template', data: spouse}"></div>
-		  </div>
-        </div>
-        
-		<div data-bind="with: dad">
-		  <div data-bind="template: {name: 'child-template', foreach: kids, as: 'kid'}"></div>
-		</div>
+      <div class="container minder-container" data-bind="with: dad">
+		<div class="mainPerson"
+             data-bind="template: {name: 'person-template'}"></div>
+
+        <!--ko if: spouse-->
+		<div class="mainPerson spouse"
+             data-bind="template: {name: 'person-template', data: spouse}"></div>
+        <!--/ko-->
+
+		<div data-bind="template: {name: 'child-template', foreach: kids, as: 'kid'}"></div>
       </div>
         
-      <footer>
+      <footer class="footer">
 	    <span class="col-sm-3"></span>
 	    <span class="col-sm-6" style="text-align: center">Posted by: Tony Alferez<br/>
 	      Contact information: <a href="mailto:info@glassbeadinc.com">tony@gbservices.com</a>.</span>
@@ -200,43 +184,40 @@
       
       <!-- START person template -->
       <script type="text/html" id="person-template">
-        <a class="fancybox" data-bind='attr: { "title": username(), href: "images/" + id() + "2.jpg" }'>
-          <img data-bind="attr: { src: image }" class="img-circle">
-        </a>
-        <a data-bind='attr: { href: "mailto:" + email() }'>
-          <span data-bind="text: username" class="divName"></span>
-        </a>
-
-        <div>
+        <div class="person">
+          <a class="fancybox" rel="gallery" data-bind="attr: { 'title': username, 'href': image2 }">
+            <img data-bind="attr: { src: image }" class="img-circle">
+          </a>
+          <a data-bind="attr: { href: 'mailto:' + email() }">
+            <span data-bind="text: username" class="divName"></span>
+          </a>
+          
           <span data-bind="text: bday" class="divBDay"></span>
-        </div>
-        
-        <div data-bind="if: $root.editMode">
+          
+          <!--ko if: $root.editMode-->
           <div class="edit-button-panel"
                data-bind="template: {name: 'edit-options-template'}"></div>
+          <!--/ko-->
+          </div>
         </div>
       </script>
       
       <script type="text/html" id="spouse-template">
-        <div data-bind="attr: {id: id}" class="childSpouse">
-          <span class="childSpouseLabel">Spouse</span>
-          <div data-bind="attr: {id: id}" class="person">
-            <div class="person" data-bind="template: {name: 'person-template'}"></div>
-          </div>
-        </div>
+        <span class="childSpouseLabel">Spouse</span>
+        <div data-bind="template: {name: 'person-template'}"></div>
       </script>
       
       <!-- START kid template  -->
       <script type="text/html" id="child-template">
-        <div data-bind="attr: {id: id}" class="childSpace">
+        <div class="childSpace">
           <span class="childLabel">Child</span>
-          <div class="child">
-            <div data-bind="attr: {id: id}" class="person">
-              <div class="person" data-bind="template: {name: 'person-template'}"></div>
-            </div>
-          </div>
-        
-          <div data-bind="template: {name: 'spouse-template', if: spouse, data: spouse}"></div>
+          <div class="child"
+               data-bind="template: {name: 'person-template'}"></div>
+
+          <!--ko if: spouse-->
+          <div class="childSpouse"
+               data-bind="template: {name: 'spouse-template', data: spouse}"></div>
+          <!--/ko-->
         
           <div data-bind="template: {name: 'grandkid-template', foreach: kids}"></div>    
         </div>
@@ -245,16 +226,16 @@
       
       <!-- START grandkid template -->
       <script type="text/html" id="grandkid-template">
-        <div data-bind="attr: {id: id}" class="grandchildSpace">
+        <div class="grandchildSpace">
           <span class="grandchildLabel">Grandchild</span>
-          <span class="divGCName"></span>
-          <div class="grandchild">
-            <div data-bind="attr: {id: id}" class="person">
-              <div class="person" data-bind="template: {name: 'person-template'}"></div>
-            </div>
-          </div>
-          
-          <div data-bind="template: {name: 'spouse-template', if: spouse, data: spouse}"></div>
+
+          <div class="grandchild"
+               data-bind="template: {name: 'person-template'}"></div>
+
+          <!--ko if: spouse-->
+          <div class="grandchildSpouse"
+               data-bind="template: {name: 'spouse-template', data: spouse}"></div>
+          <!--/ko-->
           
           <div data-bind="template: {name: 'greatgrandkid-template', foreach: kids}"></div>
         </div>
@@ -263,13 +244,14 @@
       
       <!-- START greatgrandkid template -->
       <script type="text/html" id="greatgrandkid-template">
-        <div data-bind="attr: {id: id}" class="greatGrandchild">
+        <div class="greatGrandchild">
           <span class="greatGrandchildLabel">Great Grandchild</span>
-          <div data-bind="attr: {id: id}" class="person">
-            <div class="person" data-bind="template: {name: 'person-template'}"></div>
-          </div>
-          
-          <div data-bind="template: {if: spouse, name: 'spouse-template', data: spouse}"></div>
+          <div data-bind="template: {name: 'person-template'}"></div>
+
+          <!--ko if: spouse-->
+          <div class="greatGrandchildSpouse"
+               data-bind="template: {name: 'spouse-template', data: spouse}"></div>
+          <!--/ko-->
         </div>
       </script>
       <!-- END greatgrandkid template -->
@@ -278,15 +260,18 @@
       <script type="text/html" id="edit-options-template">
         <div class="edit-button"
              data-bind="template: {name: 'edit-person-template'}"></div>
-        <div class="edit-button" data-bind="if: !isSpouse()">
-          <div data-bind="template: {name: 'add-kid-template'}"></div>
-        </div>
-        <div class="edit-button" data-bind="if: !spouseLink() && !isSpouse()">
-          <div data-bind="template: {name: 'add-spouse-template'}"></div>
-        </div>
-        <div class="edit-button" data-bind="if: parent()">
-          <div data-bind="template: {name: 'delete-person-template'}"></div>
-        </div>
+        
+        <!-- spouse's cannot add kids -->
+        <div class="edit-button"
+             data-bind="visible: canHaveKids, template: {name: 'add-kid-template'}"></div>
+        
+        <!-- if they have a spouse or are a spouse then they can't add one -->
+        <div class="edit-button"
+             data-bind="visible: canHaveSpouse, template: {name: 'add-spouse-template'}"></div>
+        
+        <!-- you can't delete dad or people with dependents -->
+        <div class="edit-button"
+             data-bind="visible: canBeDeleted, template: {name: 'delete-person-template'}"></div>
       </script>
       <!-- END edit-options template -->
 
@@ -301,7 +286,7 @@
               <form role="form" data-bind="submit: savePerson">
                 <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal">&times;</button>
-                  <h4 class="modal-title" data-bind='text: "Edit " + username()'></h4>
+                  <h4 class="modal-title" data-bind="text: 'Edit ' + username()"></h4>
                 </div>
                 
                 <div class="modal-body">
@@ -362,7 +347,7 @@
               <form role="form" data-bind="submit: addKid">
                 <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal">&times;</button>
-                  <h4 class="modal-title" data-bind='text: "Add Child to " + username()'></h4>
+                  <h4 class="modal-title" data-bind="text: 'Add Child to ' + username()"></h4>
                 </div>
                 
                 <div class="modal-body">
@@ -405,7 +390,7 @@
               <form role="form" data-bind="submit: addSpouse">
                 <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal">&times;</button>
-                  <h4 class="modal-title" data-bind='text: "Add Spouse to " + username()'></h4>
+                  <h4 class="modal-title" data-bind="text: 'Add Spouse to ' + username()"></h4>
                 </div>
                 
                 <div class="modal-body">
