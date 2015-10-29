@@ -1,7 +1,7 @@
 /**
  * 
  */
-var HOST = 'http://localhost:8080';
+var HOST = 'http://familyminder.com:8080';
 var ORG = "grannyminder";
 var APP = "gminder";
 
