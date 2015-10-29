@@ -4,7 +4,7 @@
 	<meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
 
-    <title>Granny Minder</title>
+    <title>Family Minder></title>
     <link rel="icon" type="image/x-icon" href="favicon.ico"/>
     
     <script src="source/jquery-1.11.3.js"></script>
@@ -53,7 +53,9 @@
     <nav class="navbar navbar-default navbar-fixed-top">
       <div class="container minder-container">
         <div class="navbar-header">
-          <a class="navbar-brand" href="http://www.glassbeadinc.com/tree">Family &apos;Minder</a>
+          <a class="navbar-brand"
+             data-bind="text: 'Family \'Minder: ' + familyName()"
+             href="http://www.glassbeadinc.com/tree"></a>
         </div>
         <div class="navbar-collapse collapse">
           <ul class="nav navbar-nav">

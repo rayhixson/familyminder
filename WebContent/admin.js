@@ -170,6 +170,7 @@ function AdminViewModel() {
 
         if (client.isLoggedIn()) {
             self.ugClient = client;
+            self.familyName(self.ugClient.get("appName"));
         }
     };
 
@@ -183,12 +184,6 @@ function AdminViewModel() {
         self.personViewModel(new PersonViewModel(self, 'ray'));
     }
 };
-
-function MinderError(message) {
-    this.message = message;
-};
-MinderError.prototype = new Error();
-MinderError.prototype.constructor = MinderError;
 
 var adminViewModel = new AdminViewModel();
 ko.applyBindings(adminViewModel);
