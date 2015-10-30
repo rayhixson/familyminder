@@ -50,10 +50,6 @@ function Person(uuid, name, bday, email, img, img2, adminView) {
     // A Person object
     self.spouse = ko.observable();
     
-    self.showAlert = ko.observable(false);
-    self.showErrorAlert = ko.observable(false);
-    self.errorMessage = ko.observable();
-
     // Logic about the data model we are imposing:
     self.canHaveKids = ko.pureComputed(function() {
         // Spouses can't have kids
@@ -99,14 +95,9 @@ function Person(uuid, name, bday, email, img, img2, adminView) {
     
 	// -------- Behaviors ----------
 
-    self.stopShowErrorAlert = function() {
-        self.showErrorAlert(false);
-        self.errorMessage(null);
-    };
-
     self.handleError = function(err) {
-        self.errorMessage(err.message);
-        self.showErrorAlert(true);
+        self.adminView.personViewModel.errorMessage(err.message);
+        self.adminView.personViewModel.showErrorAlert(true);
     };
     
     self.createPerson = function(newUsername, callback) {
@@ -192,7 +183,7 @@ function Person(uuid, name, bday, email, img, img2, adminView) {
 	
     self.addKid = function() {
         // reset any previous error dialog
-        self.stopShowErrorAlert();
+        adminView.personViewModel.stopShowErrorAlert();
         
         self.createPerson(self.newChildUsername(), function(person) {
 			self.kids.push(person);
@@ -222,6 +213,10 @@ function PersonViewModel(adminView, dadsName) {
     self.adminView = adminView;
     self.dadsName = dadsName;
 	
+    self.showAlert = ko.observable(false);
+    self.showErrorAlert = ko.observable(false);
+    self.errorMessage = ko.observable();
+
 	self.people = ko.observableArray([]);
 	self.peopleNames = ko.observableArray([]);
 
@@ -233,6 +228,11 @@ function PersonViewModel(adminView, dadsName) {
 	
 	//	Functions
 	
+    self.stopShowErrorAlert = function() {
+        self.showErrorAlert(false);
+        self.errorMessage(null);
+    };
+
 	self.getDad = function() {
         var options = {
             type: "users",
