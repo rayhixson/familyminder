@@ -1,0 +1,274 @@
+
+<div class="container minder-container" data-bind="with: dad">
+  <div class="mainPerson"
+       data-bind="template: {name: 'person-template'}"></div>
+  
+  <!--ko if: spouse-->
+  <div class="mainPerson spouse"
+       data-bind="template: {name: 'person-template', data: spouse}"></div>
+  <!--/ko-->
+  
+  <div data-bind="template: {name: 'child-template', foreach: kids, as: 'kid'}"></div>
+</div>
+
+<!-- START person template -->
+<script type="text/html" id="person-template">
+  <div class="person">
+    <a class="fancybox" rel="gallery" data-bind="attr: { 'title': username, 'href': image2 }">
+      <img data-bind="attr: { src: image }" class="img-circle">
+    </a>
+    <a data-bind="attr: { href: 'mailto:' + email() }">
+      <span data-bind="text: username" class="divName"></span>
+    </a>
+    
+    <span data-bind="text: bday" class="divBDay"></span>
+    
+    <!--ko if: $root.context().editMode-->
+    <div class="edit-button-panel"
+         data-bind="template: {name: 'edit-options-template'}"></div>
+    <!--/ko-->
+  </div>
+</script>
+
+<script type="text/html" id="spouse-template">
+  <span class="childSpouseLabel">Spouse</span>
+  <div data-bind="template: {name: 'person-template'}"></div>
+</script>
+
+<!-- START kid template  -->
+<script type="text/html" id="child-template">
+  <div class="childSpace">
+    <span class="childLabel">Child</span>
+    <div class="child"
+         data-bind="template: {name: 'person-template'}"></div>
+    
+    <!--ko if: spouse-->
+    <div class="childSpouse"
+         data-bind="template: {name: 'spouse-template', data: spouse}"></div>
+    <!--/ko-->
+    
+    <div data-bind="template: {name: 'grandkid-template', foreach: kids}"></div>    
+  </div>
+</script>
+<!-- END kid template -->
+
+<!-- START grandkid template -->
+<script type="text/html" id="grandkid-template">
+  <div class="grandchildSpace">
+    <span class="grandchildLabel">Grandchild</span>
+    
+    <div class="grandchild"
+         data-bind="template: {name: 'person-template'}"></div>
+    
+    <!--ko if: spouse-->
+    <div class="grandchildSpouse"
+         data-bind="template: {name: 'spouse-template', data: spouse}"></div>
+    <!--/ko-->
+    
+    <div data-bind="template: {name: 'greatgrandkid-template', foreach: kids}"></div>
+  </div>
+</script>
+<!-- END grandkid template -->
+
+<!-- START greatgrandkid template -->
+<script type="text/html" id="greatgrandkid-template">
+  <div class="greatGrandchild">
+    <span class="greatGrandchildLabel">Great Grandchild</span>
+    <div data-bind="template: {name: 'person-template'}"></div>
+    
+    <!--ko if: spouse-->
+    <div class="greatGrandchildSpouse"
+         data-bind="template: {name: 'spouse-template', data: spouse}"></div>
+    <!--/ko-->
+  </div>
+</script>
+<!-- END greatgrandkid template -->
+
+<!-- START edit-options template -->
+<script type="text/html" id="edit-options-template">
+  <div class="edit-button"
+       data-bind="template: {name: 'edit-person-template'}"></div>
+  
+  <!-- spouse's cannot add kids -->
+  <div class="edit-button"
+       data-bind="visible: canHaveKids, template: {name: 'add-kid-template'}"></div>
+  
+  <!-- if they have a spouse or are a spouse then they can't add one -->
+  <div class="edit-button"
+       data-bind="visible: canHaveSpouse, template: {name: 'add-spouse-template'}"></div>
+  
+  <!-- you can't delete dad or people with dependents -->
+  <div class="edit-button"
+       data-bind="visible: canBeDeleted, template: {name: 'delete-person-template'}"></div>
+</script>
+<!-- END edit-options template -->
+
+<!-- START edit-person template -->
+<script type="text/html" id="edit-person-template">
+  <button type="button" class="btn btn-info btn-xs" data-toggle="modal"
+          data-bind="attr: {'data-target': '#editPerson-' + uuid()}">Edit</button>
+  <div class="modal fade" role="dialog" data-keyboard="true"
+       data-bind="dismissModal: okToClose, attr: {'id': 'editPerson-' + uuid()}">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form role="form" data-bind="submit: savePerson">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title" data-bind="text: 'Edit ' + username()"></h4>
+          </div>
+          
+          <div class="modal-body">
+			<div class="row">
+			  <div class="col-sm-12">
+				<div class="form-group">
+				  <label class="control-label col-sm-2" for="username">Name:</label>
+				  <div class="col-sm-10">
+					<input data-bind="value: username" class="form-control" id="username"
+                           autofocus=""/>
+				  </div>
+				</div>
+				<div class="form-group">
+				  <label class="control-label col-sm-2" for="email">Email:</label>
+				  <div class="col-sm-10">
+					<input data-bind="value: email" type="email" class="form-control" id="email"/>
+				  </div>
+				</div>
+				<div class="form-group">
+				  <label class="control-label col-sm-2" for="bday">Birthday:</label>
+				  <div class="col-sm-10">
+					<input data-bind="value: bday" class="form-control" id="bday"/>
+				  </div>
+				</div>
+				<div class="form-group">
+				  <label class="control-label col-sm-2" for="image">Img Url:</label>
+				  <div class="col-sm-10">
+					<input data-bind="value: image" class="form-control" id="image"/>
+				  </div>
+				</div>
+			  </div>
+			</div>
+          </div>
+          
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary"
+                    data-bind="click: savePerson">Save</button>
+            <button type="button" class="btn btn-default"
+                    data-dismiss="modal">Close</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</script>
+<!-- END edit-person template -->
+
+<!-- START add-kid template -->
+<script type="text/html" id="add-kid-template">
+  <button type="button" class="btn btn-info btn-xs" data-toggle="modal"
+          data-bind="attr: {'data-target': '#addKid-' + uuid()}">+Child</button>
+  <div id="addKid" class="modal fade" role="dialog" data-keyboard="true"
+       data-bind="dismissModal: okToClose, attr: {id: 'addKid-' + uuid()}">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form role="form" data-bind="submit: addKid">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title" data-bind="text: 'Add Child to ' + username()"></h4>
+          </div>
+          
+          <div class="modal-body">
+			<div class="row">
+			  <div class="col-sm-12">
+			    
+				<div class="form-group">
+				  <label class="control-label col-sm-2" for="username">Name:</label>
+				  <div class="col-sm-10">
+					<input data-bind="value: newChildUsername" class="form-control"
+                           autofocus="" id="username"/>
+				  </div>
+				</div>
+			  </div>
+			</div>
+            
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Create Child</button>
+            <button type="button" class="btn btn-default"
+                    data-dismiss="modal">Close</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</script>
+<!-- END add-kid template -->
+
+<!-- START add-spouse template -->
+<script type="text/html" id="add-spouse-template">
+  <button type="button" class="btn btn-info btn-xs" data-toggle="modal"
+          data-bind="attr: {'data-target': '#addSpouse-' + uuid()}">+Spouse</button>
+  <div id="addSpouse" class="modal fade" role="dialog" data-keyboard="true"
+       data-bind="dismissModal: okToClose, attr: {id: 'addSpouse-' + uuid()}">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form role="form" data-bind="submit: addSpouse">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title" data-bind="text: 'Add Spouse to ' + username()"></h4>
+          </div>
+          
+          <div class="modal-body">
+			<div class="row">
+			  <div class="col-sm-12">
+			    
+			    <form class="form-horizontal" role="form">
+				  <div class="form-group">
+					<label class="control-label col-sm-2" for="username">Name:</label>
+					<div class="col-sm-10">
+					  <input data-bind="value: newSpouseUsername" class="form-control"
+                             autofocus="" id="username"/>
+					</div>
+				  </div>
+			    </form>
+			  </div>
+			</div>
+          </div>
+          
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary"
+                    data-dismiss="modal">Create Spouse</button>
+            <button type="button" class="btn btn-default"
+                    data-dismiss="modal">Close</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</script>
+<!-- END add-spouse template -->
+
+<!-- START delete-person template -->
+<script type="text/html" id="delete-person-template">
+  <button type="button" class="btn btn-info btn-xs"
+          data-toggle="modal"
+          data-bind="attr: {'data-target': '#confirmDelete-' + uuid()}">Del</button>
+  <div class="modal fade" role="dialog" data-keyboard="true"
+       data-bind="dismissModal: okToClose, attr: {id: 'confirmDelete-' + uuid()}">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-body" data-bind="text: 'Delete ' + username() + '?'"></div>
+        
+        <div class="modal-footer">
+          <form role="form" data-bind="submit: deletePerson">
+            <button type="submit" class="btn btn-primary"
+                    autofocus="autofocus">Delete</button>
+            <button type="button" class="btn btn-default"
+                    data-dismiss="modal">Cancel</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</script>
+<!-- END delete-person template -->
+

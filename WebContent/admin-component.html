@@ -1,0 +1,63 @@
+<div class="container">
+  <div class="row">
+    <div class="col-md-8" role="main">
+      
+      <div class="panel panel-primary">
+        <div class="panel-heading">
+	      <h3 class="panel-title">Create New Family</h3>
+        </div>
+        
+        <div class="panel-body">
+	      <form class="form-horizontal" role="form" data-bind="submit: createFamily" >
+            <!--ko with: context-->
+	        <div class="form-group">
+		      <label class="control-label col-sm-2" for="name">Minder Admin Name</label>
+		      <div class="col-sm-10">
+		        <input data-bind="value: minderAdminName" class="form-control" id="name"/>
+		      </div>
+	        </div>
+	        <div class="form-group">
+		      <label class="control-label col-sm-2" for="password">Minder Admin Password</label>
+		      <div class="col-sm-10">
+		        <input data-bind="value: minderAdminPassword" class="form-control" id="password"/>
+		      </div>
+	        </div>
+	        <div class="form-group">
+		      <label class="control-label col-sm-2" for="familyname">New Family Name</label>
+		      <div class="col-sm-10">
+		        <input data-bind="value: familyName" class="form-control" id="familyname"/>
+		      </div>
+	        </div>
+	        <div class="form-group">
+		      <label class="control-label col-sm-2" for="name">Family Admin Name</label>
+		      <div class="col-sm-10">
+		        <input data-bind="value: familyAdminName" class="form-control" id="name"/>
+		      </div>
+	        </div>
+	        <div class="form-group">
+		      <label class="control-label col-sm-2" for="adminpassword">Family Admin Password</label>
+		      <div class="col-sm-10">
+		        <input data-bind="value: familyAdminPassword" class="form-control" id="adminpassword"/>
+		      </div>
+	        </div>
+	        <div class="form-group">
+		      <div class="col-sm-offset-2 col-sm-2">
+		        <button type="submit" class="btn btn-primary">Create New Family</button>
+		      </div>
+	        </div>
+            <!--/ko-->
+	      </form>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4" role="complementary">
+      <!-- this is here to create a larger right margin, and in the short
+           term provide insecure cheater access to data 
+           <org-index-component params=""></org-index-component>
+           -->
+      
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,45 @@
+<div class="container">
+  <div class="row">
+    <div class="col-md-8" role="main">
+      
+      <div class="panel panel-primary">
+        <div class="panel-heading">
+	      <h3 class="panel-title">Login to see Existing Family</h3>
+        </div>
+        <div class="panel-body">
+	      <form class="form-horizontal" role="form" data-bind="submit: login" >
+            <!--ko with: context-->
+	        <div class="form-group">
+		      <label class="control-label col-sm-3" for="familyname">Family Name</label>
+		      <div class="col-sm-9">
+		        <input data-bind="value: familyName" class="form-control" id="familyname"/>
+		      </div>
+	        </div>
+	        <div class="form-group">
+		      <label class="control-label col-sm-3" for="name">Family Admin Name</label>
+		      <div class="col-sm-9">
+		        <input data-bind="value: familyAdminName" class="form-control" id="name"/>
+		      </div>
+	        </div>
+	        <div class="form-group">
+		      <label class="control-label col-sm-3" for="password">Family Admin Password</label>
+		      <div class="col-sm-9">
+		        <input type="password" data-bind="value: familyAdminPassword" class="form-control" id="password"/>
+		      </div>
+	        </div>
+	        <div class="form-group">
+		      <div class="col-sm-offset-2 col-sm-2">
+		        <button type="submit" class="btn btn-primary">Login</button>
+		      </div>
+	        </div>
+            <!--/ko-->
+	      </form>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4" role="complementary">
+      <!-- bigger right margin looks better -->
+    </div>
+  </div>
+</div>

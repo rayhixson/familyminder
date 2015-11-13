@@ -166,14 +166,14 @@ UsergridEventable.mixin = function(destObject) {
         if (promises === null || promises.length === 0) {
             p.done(error, result);
         } else {
-            promises[0](error, result).then(function(res, err) {
+            promises[0](error, result).then(function(err, res) {
                 promises.splice(0, 1);
                 if (promises) {
-                    Promise.chain(promises, res, err).then(function(r, e) {
-                        p.done(r, e);
+                    Promise.chain(promises, err, res).then(function(e, r) {
+                        p.done(e, r);
                     });
                 } else {
-                    p.done(res, err);
+                    p.done(err, res);
                 }
             });
         }
@@ -537,7 +537,12 @@ function doCallback(callback, params, context) {
         if (this.success) {
             p.done(null, this);
         } else {
-            p.done(UsergridError.fromResponse(data), this);
+            var e = UsergridError.fromResponse(data);
+            // if we don't get any info out of e then return 
+            // the error that was passed in
+            p.done(e.message ? e : err, this);
+            //p.done(err, this);
+            //p.done(, this);
         }
         return p;
     };
@@ -2806,7 +2811,7 @@ Usergrid.Folder = function(options, callback) {
     }
     self.save(function(err, response) {
         if (err) {
-            doCallback(callback, [ new UsergridError(response), response, self ], self);
+            doCallback(callback, [ new UsergridError(err), response, self ], self);
         } else {
             if (response && response.entities && response.entities.length) {
                 self.set(response.entities[0]);
@@ -2837,7 +2842,7 @@ Usergrid.Folder.prototype.fetch = function(callback) {
         if (!err) {
             self.getAssets(function(err, response) {
                 if (err) {
-                    doCallback(callback, [ new UsergridError(response), resonse, self ], self);
+                    doCallback(callback, [ new UsergridError(err), resonse, self ], self);
                 } else {
                     doCallback(callback, [ null, self ], self);
                 }
@@ -2883,7 +2888,7 @@ Usergrid.Folder.prototype.addAsset = function(options, callback) {
         if (asset && asset instanceof Usergrid.Entity) {
             asset.fetch(function(err, data) {
                 if (err) {
-                    doCallback(callback, [ new UsergridError(data), data, self ], self);
+                    doCallback(callback, [ new UsergridError(err), data, self ], self);
                 } else {
                     var endpoint = [ "folders", self.get("uuid"), "assets", asset.get("uuid") ].join("/");
                     var options = {
@@ -2935,7 +2940,7 @@ Usergrid.Folder.prototype.removeAsset = function(options, callback) {
                 endpoint: endpoint
             }, function(err, response) {
                 if (err) {
-                    doCallback(callback, [ new UsergridError(response), response, self ], self);
+                    doCallback(callback, [ new UsergridError(err), response, self ], self);
                 } else {
                     doCallback(callback, [ null, response, self ], self);
                 }
@@ -2994,7 +2999,7 @@ Usergrid.Asset = function(options, callback) {
     } else {
         self.save(function(err, data) {
             if (err) {
-                doCallback(callback, [ new UsergridError(data), data, self ], self);
+                doCallback(callback, [ new UsergridError(err), data, self ], self);
             } else {
                 if (data && data.entities && data.entities.length) {
                     self.set(data.entities[0]);
