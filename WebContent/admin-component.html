@@ -27,7 +27,8 @@
 	        <div class="form-group">
 		      <label class="control-label col-sm-5" for="adminpassword">Family Admin Password</label>
 		      <div class="col-sm-7">
-		        <input data-bind="value: familyAdminPassword" class="form-control" id="adminpassword"/>
+		        <input type="password" data-bind="value: familyAdminPassword"
+                       class="form-control" id="adminpassword"/>
 		      </div>
             </div>
             
@@ -47,9 +48,9 @@
 	      <h3 class="panel-title">Config Info</h3>
         </div>
         
-        <!--ko with: context-->
         <div class="panel-body">
-	      <form class="form-horizontal" role="form" data-bind="submit: saveConfigs" >
+	      <form class="form-horizontal" role="form" data-bind="submit: save" >
+            <!--ko with: context-->
 	        <div class="form-group">
 		      <label class="control-label col-sm-5" for="name">Minder Admin Name</label>
 		      <div class="col-sm-7">
@@ -60,7 +61,8 @@
 	        <div class="form-group">
 		      <label class="control-label col-sm-5" for="password">Minder Admin Password</label>
 		      <div class="col-sm-7">
-		        <input data-bind="value: minderAdminPassword" class="form-control" id="password"/>
+		        <input type="password" data-bind="value: minderAdminPassword"
+                       class="form-control" id="password"/>
 		      </div>
 	        </div>
             
@@ -83,16 +85,24 @@
 		        <button type="submit" class="btn btn-primary pull-right">Save</button>
 		      </div>
 	        </div>
+            <!--/ko-->
           </form>
         </div>
-        <!--/ko-->
       </div>
     </div>
     
     <div class="col-md-6" role="complementary">
-      <h2>Existing Organizations</h2>
-      <div data-bind="foreach: ugApplications" class="list-group">
-        <a href="#" class="list-group-item" data-bind="click: goToLogin, text: $data.name"></a>
+      <div class="panel panel-primary">
+        <div class="panel-heading">
+	      <h3 class="panel-title">Existing Families</h3>
+        </div>
+        
+        <div class="panel-body">
+          <div data-bind="foreach: ugApplications" class="list-group">
+            <a href="#" class="list-group-item"
+               data-bind="click: goToLogin, text: $data.name"></a>
+          </div>
+        </div>
       </div>
     </div>
   </div>

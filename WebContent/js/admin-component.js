@@ -24,7 +24,7 @@ define(function (require) {
             } else {
 
                 console.log("--> Get an admin token ...");
-                self.ugClient.adminLogin(context.minderAdminName(), context.minderAdminPassword(), function(err, response) {
+                self.ugClient.login(context.minderAdminName(), context.minderAdminPassword(), function(err, response) {
                     if (err) {
                         context.handleError(err);
                     } else {
@@ -39,12 +39,12 @@ define(function (require) {
                         // CREATE THE APP
                         console.log("--> Make request to create an app");
                         
-                        self.ugClient.adminRequest(options, function(err2, resdata) {
+                        self.ugClient.request(options, function(err2, resdata) {
                             if (err2) {
                                 context.handleError("Create App: " + err2);
                             } else {
                                 // now that the app exists, tell the client object
-                                self.ugClient.setAppName(context.familyName());
+                                self.ugClient.appName = context.familyName();
                                 
                                 // CREATE THE ADMIN USER FOR THE APP
                                 var data = {
@@ -76,27 +76,30 @@ define(function (require) {
             }
         };
 
+        self.save = function() {
+            context.saveConfigs();
+            self.initApplications();
+        };
+
         self.initApplications = function() {
-            self.ugClient = new UsergridClient(true);
-            if (!self.ugClient.isLoggedIn()) {
-                self.ugClient = UsergridClient.create(context.ugHost(),
-                                                      context.ugOrganization(),
-                                                      context.familyName(),
-                                                      true);
-            }
+            self.ugClient = new UsergridClient(context.ugHost(),
+                                               context.ugOrganization(),
+                                               context.familyName(),
+                                               true);
                 
+            self.ugApplications.removeAll();
+            
             console.log("--> Get an admin token ...");
-            self.ugClient.adminLogin(context.minderAdminName(), context.minderAdminPassword(), function(err, response) {
+            self.ugClient.login(context.minderAdminName(), context.minderAdminPassword(), function(err, response) {
                 if (err) {
                     context.handleError(err);
                 } else {
                     var options = {
                         method: "GET",
-                        mQuery: true,
                         endpoint: "management/orgs/" + context.ugOrganization() + "/apps"
                     };
 
-                    self.ugClient.adminRequest(options, function(err, data) {
+                    self.ugClient.request(options, function(err, data) {
                         if (err) {
                             context.handleError("Failed to retrieve existing Organizations: " + err);
                         } else {
@@ -104,7 +107,6 @@ define(function (require) {
                             for (var a in data.data) {
                                 var n = a.split("/")[1];
                                 var appName = n.slice(0,1).toUpperCase() + n.slice(1);
-                                //console.log("----> " + appName);
                                 self.ugApplications.push(new UgApp(appName));
                             }
                         }
@@ -117,7 +119,7 @@ define(function (require) {
         self.initApplications();
     };
 
-    // object used to represent an app for listing them all
+    // Represents one app / family - for listing them all
     function UgApp(name) {
         var self = this;
         self.name = ko.observable(name);

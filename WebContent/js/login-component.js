@@ -15,10 +15,10 @@ define(function (require) {
         self.login = function() {
             console.log("--> Login " + context.familyAdminName());
 
-            context.ugClient = new UsergridClient().create(context.ugHost(),
-                                                     context.ugOrganization(),
-                                                     context.familyName(),
-                                                     false);
+            context.ugClient = new UsergridClient(context.ugHost(),
+                                                  context.ugOrganization(),
+                                                  context.familyName(),
+                                                  false);
 
             context.ugClient.login(context.familyAdminName(), context.familyAdminPassword(), function(err, reseponse) {
                 if (err) {

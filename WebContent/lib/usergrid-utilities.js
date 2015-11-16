@@ -4,70 +4,24 @@
 define(function(require) {
     var $ = require('jquery');
 
-    var APP_NAME_KEY = "fm_ug_app_name";
-    var ORG_NAME_KEY = "fm_ug_org_name";
-    var HOST_KEY = "fm_ug_host";
-
     /*
-     * default ctor - resurrect from disk
+     * 
      */
-    var UgClient = function(isAdminClient) {
+    var UgClient = function(ugHost, ugOrganization, appName, isAdminClient) {
         this.isAdminClient = isAdminClient;
+        
+        this.ugHost = ugHost;
+        this.ugOrganization = ugOrganization;
+        this.appName = appName;
 
         this.tokenKey = isAdminClient ? "fm_ug_admin_token" : "fm_ug_family_token";
 
-        this.token = this.get(this.tokenKey);
-        this.ugHost = this.get(HOST_KEY);
-        this.ugOrganization = this.get(ORG_NAME_KEY);
-        this.appName = this.get(APP_NAME_KEY);
-    };
-
-    UgClient.prototype.create = function(ugHost, ugOrganization, appName, isAdminClient) {
-        var client = new UgClient(isAdminClient);
-        
-        client.ugHost = ugHost;
-        client.ugOrganization = ugOrganization;
-        client.appName = appName;
-
-        client.tokenKey = isAdminClient ? "fm_ug_admin_token" : "fm_ug_family_token";
-        
-        // save these for later
-        client.set(ORG_NAME_KEY, ugOrganization);
-        client.set(APP_NAME_KEY, appName);
-        client.set(HOST_KEY, ugHost);
-        
-        return client;
-    };
-
-    UgClient.prototype.getAppName = function() {
-        return this.get(APP_NAME_KEY);
-    };
-
-    UgClient.prototype.setAppName = function(appName) {
-        this.set(APP_NAME_KEY, appName);
+        this.token = localStorage.getItem(this.tokenKey);
     };
 
     UgClient.prototype._buildUrl = function() {
-        return this.ugHost + '/' + this.get(ORG_NAME_KEY) +
-            '/' + this.get(APP_NAME_KEY);
-    };
-
-    UgClient.prototype.adminLogin = function(username, password, callback) {
-        var url = this.ugHost + "/management/token";
-        var data = {
-            username: username,
-            password: password,
-            grant_type: "password"
-        };
-
-        var client = this;
-        this._http(url, "POST", data, function(err, response) {
-            if (!err) {
-                client.set(client.tokenKey, response.access_token);
-            }
-            // either way invoke the callback
-            callback(err, response);
-        });
+        return this.ugHost + '/' + this.ugOrganization +
+            '/' + this.appName;
     };
 
     UgClient.prototype.isLoggedIn = function() {
@@ -79,6 +33,14 @@ define(function(require) {
      */
     UgClient.prototype.login = function(username, password, callback) {
         var url = this._buildUrl() + "/token";
+        
+        if (this.isAdminClient) {
+            url = this.ugHost + "/management/token";
+        }
+
+        // don't reuse the old token if there is one
+        this.token = null;
+        
         var data = {
             username: username,
             password: password,
@@ -89,7 +51,8 @@ define(function(require) {
 
         this._http(url, "POST", data, function(err, response) {
             if (!err) {
-                client.set(client.tokenKey, response.access_token);
+                localStorage.setItem(client.tokenKey, response.access_token);
+                client.token = response.access_token;
             }
             // either way invoke the callback
             callback(err, response);
@@ -102,14 +65,6 @@ define(function(require) {
         var url = this._buildUrl() + "/users/" + username + "/revoketokens";
 
         this._http(url, "PUT", null, callback);
-    };
-
-    UgClient.prototype.set = function(key, arg) {
-        localStorage.setItem(key, arg);
-    };
-
-    UgClient.prototype.get = function(key) {
-        return localStorage.getItem(key);
     };
 
     /*
@@ -125,16 +80,12 @@ define(function(require) {
      */
     UgClient.prototype.request = function(options, callback) {
         var uri = this._buildUrl();
-        if (!options.endpoint.startsWith('/')) {
-            uri += '/';
+
+        // admin type request?
+        if (options.endpoint.startsWith("management")) {
+            uri = this.ugHost;
         }
-        uri += options.endpoint;
-
-        this._http(uri, options.method, options.body, callback);
-    };
-
-    UgClient.prototype.adminRequest = function(options, callback) {
-        var uri = this.ugHost;
+        
         if (!options.endpoint.startsWith('/')) {
             uri += '/';
         }
@@ -151,10 +102,9 @@ define(function(require) {
 		    };
 	    }
 	    
-	    var token = this.get(this.tokenKey);
-        if (token) {
+        if (this.token) {
             //headers = {'Authorization' : 'Bearer ' + token};
-            uri += '?access_token=' + token;
+            uri += '?access_token=' + this.token;
         }
 
 	    $.ajax({
@@ -167,7 +117,7 @@ define(function(require) {
 		    .done(function(resp, status, xhr) {
 			    //if (method != 'GET') {
 				console.log("URL: " + uri);
-				console.log("Post Data: " + data);
+				console.log("Post Data: " + JSON.stringify(data));
 				console.log("Response: " + JSON.stringify(resp, null, 2));
 			    //}
 			    if (callback) {
