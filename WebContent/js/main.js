@@ -19,12 +19,13 @@ require.config({
     }
 });
 
-require(["knockout", "jquery", "js/context", "js/views", "bootstrap",
+require(["knockout", "jquery", "js/context",
+         "js/views", "bootstrap",
          "jquery.mousewheel-3.0.6.pack",
          "jquery.fancybox.pack", "jquery.fancybox-buttons", "jquery.fancybox-media",
-         "jquery.fancybox-thumbs"],
-function(ko, $, context, views) {
-    
+         "jquery.fancybox-thumbs"], 
+function (ko, $, context, views) {
+            
     $(".fancybox").fancybox({
         'hideOnContentClick': false
     });
@@ -32,7 +33,6 @@ function(ko, $, context, views) {
     $(document).ready(function() {
         // cannot get this fucker to work
         $(".modal").on('shown.bs.modal', function() {
-            console.log("Looking");
             $(this).find("[autofocus]").focus();
         });
     });
@@ -46,7 +46,6 @@ function(ko, $, context, views) {
     // Below here is all
     // UI Visual / JQuery hooks - where does this code belong?
     // -------
-
     ko.bindingHandlers.fadeAlert = {
         init: function(element, valueAccessor) {
             var value = valueAccessor();
@@ -126,7 +125,6 @@ function(ko, $, context, views) {
         
         return result + ra.join('\n');
     };
-
 
 });
 

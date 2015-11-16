@@ -1,7 +1,8 @@
-define(function(require) {
+define(function (require) {
     var ko = require('knockout'),
         context = require('js/context'),
         views = require('js/views'),
+        UsergridClient = require('usergrid-utilities'),
         html = require('text!html/login-component.html');
 
     function LoginViewModel() {
@@ -12,28 +13,24 @@ define(function(require) {
         // Behaviors
 
         self.login = function() {
-            self.context().ugClient = new Usergrid.Client({
-                URI: self.context().ugHost(),
-                orgName: self.context().ugOrganization(),
-                appName: self.context().familyName(),
-                logging: true, //optional - turn on logging, off by default
-                buildCurl: true //optional - turn on curl commands, off by default
-            });
+            console.log("--> Login " + context.familyAdminName());
 
-            console.log("--> Login " + self.context().familyAdminName());
-            
-            self.context().ugClient.login(self.context().familyAdminName(), self.context().familyAdminPassword(), function(err, response, user) {
+            context.ugClient = new UsergridClient().create(context.ugHost(),
+                                                     context.ugOrganization(),
+                                                     context.familyName(),
+                                                     false);
+
+            context.ugClient.login(context.familyAdminName(), context.familyAdminPassword(), function(err, reseponse) {
                 if (err) {
-                    self.context().handleError(err);
+                    context.handleError(err);
                 } else {
-                    self.context().userLoggedIn(true);
-                    //self.context().goTreeView();
+                    context.userLoggedIn(true);
                     views.TREE.setCurrent();
                 }
             });
         };
     };
-
+    
     return {
         viewModel: LoginViewModel,
         template: html

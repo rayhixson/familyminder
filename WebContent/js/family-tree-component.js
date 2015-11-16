@@ -1,4 +1,8 @@
-define(['knockout', 'js/context', 'text!html/family-tree-component.html', 'usergrid'], function(ko, context, html) {
+define(function (require) {
+    var ko = require('knockout'),
+        context = require('js/context'),
+        html = require('text!html/family-tree-component.html'),
+        ugClient = require('usergrid-utilities');
 
     function personFromEntity(entity, parent) {
 	    var p = new Person(entity.uuid, entity.username, entity.birthday, 
@@ -155,6 +159,7 @@ define(['knockout', 'js/context', 'text!html/family-tree-component.html', 'userg
 	    };
 
         self.addSpouse = function() {
+            
             // reset any previous error dialog
             context.stopShowErrorAlert();
 
@@ -225,15 +230,15 @@ define(['knockout', 'js/context', 'text!html/family-tree-component.html', 'userg
 	
 	    self.getDad = function() {
             var options = {
-                type: "users",
-                username: self.dadsName
+                method: "GET",
+                endpoint: "users/" +self.dadsName
             };
             
-            context.ugClient.getEntity(options, function(err, d) {
+            context.ugClient.request(options, function(err, d) {
                 if (err) {
                     context.handleError(err);
                 } else {
-                    var p = personFromEntity(d.getEntity(), null);
+                    var p = personFromEntity(d.entities[0], null);
 			        self.dad(p);
 			        self.derefRelations(p);
                 }
@@ -291,13 +296,14 @@ define(['knockout', 'js/context', 'text!html/family-tree-component.html', 'userg
 
 	    self.getAllPeople = function() {
             var options = {
+                method: "GET",
                 type: "users"
             };
             
-            context.ugClient.createCollection(options, function(err, users) {
+            context.ugClient.request(options, function(err, resp) {
                 var ps = [];
-			    for (var i=0; i < users.length; i++) {
-				    var p = personFromEntity(users[i], null);
+			    for (var i=0; i < resp.entities.length; i++) {
+				    var p = personFromEntity(resp.entities[i], null);
 				    ps.push(p);
 				    self.derefRelations(p);
 			    }

@@ -1,8 +1,13 @@
-define(["knockout", "js/views", "usergrid"], function(ko, views) {
+define(function (require) {
+    var ko = require("knockout"),
+        views = require("js/views"),
+        UsergridClient = require("usergrid-utilities");
 
+    var EDIT_MODE_KEY = "fm_edit_mode";
+        
     var ContextObj = function() {
         var self = this;
-        
+
         self.ugClient = null;
         self.ugHost = ko.observable(window.location.protocol + "//"
                               + window.location.hostname + ":8080");
@@ -30,7 +35,7 @@ define(["knockout", "js/views", "usergrid"], function(ko, views) {
 
         self.toggleMode = function() {
             self.editMode(!self.editMode());
-            localStorage.setItem('editMode', true);
+            localStorage.setItem(EDIT_MODE_KEY, true);
         };
 
         self.stopShowErrorAlert = function() {
@@ -43,41 +48,42 @@ define(["knockout", "js/views", "usergrid"], function(ko, views) {
         };
 
         self.handleError = function(err) {
-            var e = err.message ? err.message : err;
-            self.errorMessage(e);
+            self.errorMessage(err);
             self.showErrorAlert(true);
         };
 
         self.logout = function() {
             if (self.userLoggedIn()) {
-                self.ugClient.logoutAndDestroyToken(self.familyAdminName(), null, true);
+                self.ugClient.logout(self.familyAdminName(), function(err, resp) {
+                    if (err) {
+                        console.log("Failed to Logout: " + err);
+                    }
+                });
 		        self.userLoggedIn(false);
-                //self.goLoginView();
                 views.LOGIN.setCurrent();
             }
         };
 
         self.setClientFromToken = function() {
-            var client = new Usergrid.Client({
-                URI: self.ugHost(),
-                logging: true,
-                buildCurl: true
-            });
+            // try to bootstrap from localstorage
+            var client = new UsergridClient(false);
 
             if (client.isLoggedIn()) {
                 self.ugClient = client;
-                self.familyName(self.ugClient.get("appName"));
+                self.familyName(self.ugClient.getAppName());
             }
         };
 
+        self.saveConfigs = function() {
+        };
+
 	    // --   INITIALIZE 
-        self.editMode(localStorage.getItem("editMode"));
+        self.editMode(localStorage.getItem(EDIT_MODE_KEY));
         
         // when a user comes to the site and is already logged in
         self.setClientFromToken();
         if (self.ugClient) {
             self.userLoggedIn(true);
-            //self.goTreeView();
             views.TREE.setCurrent();
         }
 
