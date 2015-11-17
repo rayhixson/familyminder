@@ -35,7 +35,7 @@ define(function (require) {
 	    self.minderAdminPassword = ko.observable(self.get(ADMIN_PASS_KEY, "foobar"));
         
 	    self.familyName = ko.observable(self.get(APP_NAME_KEY, "Blork"));
-	    self.familyAdminName = ko.observable("bob");
+	    self.familyAdminName = ko.observable("Dad");
 	    self.familyAdminPassword = ko.observable("foobar");
 
         self.showErrorAlert = ko.observable(false);
