@@ -24,8 +24,7 @@ define(function (require) {
         var local = window.location.protocol + "//"
                 + window.location.hostname + ":8080";
         
-        self.ugHost = ko.observable(self.get(HOST_KEY, pub);
-                                    );
+        self.ugHost = ko.observable(self.get(HOST_KEY, pub));
         self.ugOrganization = ko.observable(self.get(ORG_NAME_KEY, "grannyminder"));
         
         self.homeUrl = ko.observable(location.origin + location.pathname);
