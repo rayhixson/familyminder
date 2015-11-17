@@ -20,7 +20,7 @@ define(function (require) {
         };
 
         self.ugClient = null;
-        var pub = "52.33.68.137:8080";
+        var pub = "http://52.33.68.137:8080";
         var local = window.location.protocol + "//"
                 + window.location.hostname + ":8080";
         
