@@ -25,6 +25,7 @@ define(function (require) {
                     context.handleError(err);
                 } else {
                     context.userLoggedIn(true);
+                    context.saveConfigs();
                     views.TREE.setCurrent();
                 }
             });

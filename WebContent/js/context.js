@@ -102,8 +102,6 @@ define(function (require) {
             self.set(APP_NAME_KEY, self.familyName());
             self.set(ORG_NAME_KEY, self.ugOrganization());
             self.set(HOST_KEY, self.ugHost());
-            
-            alert("Saved.");
         };
 
 	    // --   INITIALIZE 

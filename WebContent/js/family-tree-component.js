@@ -2,11 +2,12 @@ define(function (require) {
     var ko = require('knockout'),
         context = require('js/context'),
         html = require('text!html/family-tree-component.html'),
-        ugClient = require('usergrid-utilities');
+        ugClient = require('usergrid-utilities'),
+        $ = require('jquery');
 
     function personFromEntity(entity, parent) {
 	    var p = new Person(entity.uuid, entity.username, entity.birthday, 
-			               entity.email, entity.picture, entity.image2);
+			               entity.email, entity.picture, entity.picture2);
 
 	    if (entity.metadata.connections) {
 		    if (entity.metadata.connections.children) {
@@ -103,11 +104,33 @@ define(function (require) {
         
 	    // -------- Behaviors ----------
 
+        self.defineImage = function(name, callback) {
+            console.log("Image define: " + name);
+            // 1. see if image exists on server:
+            var img = "/images/" + name.toLowerCase() + ".jpg";
+            $.ajax({
+                url: context.homeUrl() + img,
+                type: "GET"
+            })
+                .done(function(resp, status, xhr) {
+                    console.log("That exists: " + img);
+                    callback(img);
+                })
+                .fail(function(xhr, status, err) {
+                    console.log("That does not exist: " + img);
+                    // 2. if image does not exist, use the default
+                    callback('images/default.jpg');
+                });
+        };
+
         self.createPerson = function(newUsername, callback) {
+
             var options = {
                 method: 'POST',
                 endpoint: 'users',
-                body: { 'username': newUsername }
+                body: {
+                    'username': newUsername
+                }
             };
 
             var person;
@@ -117,6 +140,17 @@ define(function (require) {
                 } else {
 			        person = personFromEntity(data.entities[0], null);
                     callback(person);
+
+                    // does the server already have images?
+                    person.defineImage(newUsername, function(imageName) {
+                        person.image(imageName);
+                        
+                        person.defineImage(newUsername+"2", function(imageName) {
+                            person.image2(imageName);
+
+                            person.savePerson();
+                        });
+                    });
                 }
 		    });
         };
@@ -128,6 +162,7 @@ define(function (require) {
                 body: {
                     'username': self.username(),
                     'picture': self.image(),
+                    'picture2': self.image2(),
                     'birthday': self.bday(),
        	            'email': self.email()
                 }
@@ -349,42 +384,3 @@ define(function (require) {
     };
 });
 
-// -------------- END Person CLASS ----------------
-
-
-// create the family
-/*
-var mom = new Person("Mom", null, dad, "Dec 14");
-var dad = new Person("Dad", null, mom, "Dec 31");
-
-var chipper = new Person("Chipper", null, marieta, "Sept 27");
-var marieta = new Person("Marieta", dad, chipper, "June 22");
-var troy = new Person("Troy", null, megan, "B-Day");
-var megan = new Person("Megan", marieta, troy, "Oct 25");
-var masha = new Person("Masha", null, nick, "B-Day");
-var nick = new Person("Nick", marieta, masha, "March 29");
-new Person("Sylvie", megan, null, "B-Day");
-new Person("Liam", megan, null, "B-Day");
-new Person("Elizabeth", nick, null, "B-Day");
-
-var margie = new Person("Margie", dad, null, "Nov 5");
-var peter = new Person("Peter", null, null, "B-Day");
-new Person("Jade", margie, peter, "Jan 8");
-var braden = new Person("Braden", null, null, "B-Day");
-new Person("Nina", margie, braden, "Feb 17");
-
-var julie = new Person("Julie", null, tony, "Apr 24", "jewel_anne@yahoo.com");
-var tony = new Person("Tony", dad, julie, "Dec 29", "tonyalferez@yahoo.com");
-new Person("Arielle", tony, null, "July 13");
-new Person("Mariquia", tony, null, "Nov 21");
-new Person("Haley", tony, null, "Sep 11");
-
-var rosie = new Person("Rosie", dad, null, "Dec 26th");
-new Person("Ben", rosie, null, "Nov 11");
-new Person("Mary", rosie, null, "B-Day");
-
-var tim = new Person("Tim", null, francie, "June 18");
-var francie = new Person("Francie", dad, tim, "Aug 25");
-new Person("Kaleb", francie, null, "B-Day");
-new Person("David", francie, null, "June 21");
-*/
