@@ -14,7 +14,7 @@ A web app that allows you to easily build a family tree. Motivated by parents wi
 The following is a high level description of the code but it is assumed that you know how Knockout works.
 
 ---
-### <a href="blob/master/www/index.html">www/index.html</a>
+### <www/index.html>
 * The home page, you will see at the bottom the use of require.js and a reference to "main" (see below)
 * In the middle of this page you will see the view rendering - one of these will only be active at any one time and this will render the middle of the page. This code starts with this line:
       <!--ko with: views-->
