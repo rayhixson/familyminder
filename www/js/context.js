@@ -25,7 +25,7 @@ define(function (require) {
                 + window.location.hostname + ":8080";
         
         self.ugHost = ko.observable(self.get(HOST_KEY, pub));
-        self.ugOrganization = ko.observable(self.get(ORG_NAME_KEY, "grannyminder"));
+        self.ugOrganization = ko.observable(self.get(ORG_NAME_KEY, "orgminder"));
         
         self.homeUrl = ko.observable(location.origin + location.pathname);
 
