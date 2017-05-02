@@ -6,26 +6,18 @@ define(function (require) {
         $ = require('jquery');
 
     function personFromEntity(entity, parent) {
-	    var p = new Person(entity.uuid, entity.username, entity.birthday, 
+	    var p = new Person(entity.uuid, entity.username, entity.birthday,
 			               entity.email, entity.picture, entity.picture2);
 
-	    if (entity.metadata.connections) {
-		    if (entity.metadata.connections.children) {
-			    p.kidsLink(entity.metadata.connections.children);
-		    }
-		    if (entity.metadata.connections.spouse) {
-			    p.spouseLink(entity.metadata.connections.spouse);
-		    }
-	    }
+	    if (entity.child_ids) {
+			p.kidsLink(entity.child_ids);
+		}
+		if (entity.spouse) {
+			p.spouseLink(entity.spouse);
+		}
 
-        if (entity.metadata.connecting) {
-            if (entity.metadata.connecting.spouse) {
-                p.isSpouse(true);
-            }
-        }
-        
         p.parent(parent);
-	
+
 	    return p;
     }
 
@@ -42,18 +34,18 @@ define(function (require) {
         self.kidsLink = ko.observable("");
         self.spouseLink = ko.observable("");
         self.isSpouse = ko.observable(false);
-        
-	    // need to bind just the names in the UI and then use this info in an event to 
+
+	    // need to bind just the names in the UI and then use this info in an event to
 	    // link to the actual person in the db
 	    self.spouseUuid = ko.observable();
-        
+
         // A Person object - used to update the parent when this child gets deleted
         // -- I think we can delete this
         self.parent = ko.observable();
-        
+
         // A Person object
         self.spouse = ko.observable();
-        
+
         // Logic about the data model we are imposing:
         self.canHaveKids = ko.pureComputed(function() {
             // great grand kids can't have kids
@@ -92,16 +84,16 @@ define(function (require) {
         // NON-OBSERVABLE
 
         self.markedForDelete = false;
-        
+
         // managing the state of Modals
         self.okToClose = ko.observable(false);
-        
+
         // Toggle the Modals to close
         self.closeModal = function() {
             self.okToClose(true);
             self.okToClose(false);
         };
-        
+
 	    // -------- Behaviors ----------
 
         self.defineImage = function(name, callback) {
@@ -138,13 +130,13 @@ define(function (require) {
                 if (err) {
                     context.handleError(err);
                 } else {
-			        person = personFromEntity(data.entities[0], null);
+			        person = personFromEntity(data, null);
                     callback(person);
 
                     // does the server already have images?
                     person.defineImage(newUsername, function(imageName) {
                         person.image(imageName);
-                        
+
                         person.defineImage(newUsername+"2", function(imageName) {
                             person.image2(imageName);
 
@@ -194,7 +186,7 @@ define(function (require) {
 	    };
 
         self.addSpouse = function() {
-            
+
             // reset any previous error dialog
             context.stopShowErrorAlert();
 
@@ -219,11 +211,11 @@ define(function (require) {
                 });
             });
         };
-	    
+
         self.addKid = function() {
             // reset any previous error dialog
             context.stopShowErrorAlert();
-            
+
             self.createPerson(self.newChildUsername(), function(person) {
 			    self.kids.push(person);
                 person.parent(self);
@@ -249,31 +241,31 @@ define(function (require) {
 
     function FamilyTreeViewModel() {
         var self = this;
-        
+
         self.dadsName = context.familyAdminName();
-	    
+
 	    self.people = ko.observableArray([]);
 	    self.peopleNames = ko.observableArray([]);
 
-	    // need to bind just the names in the UI and then use this info in an event to 
+	    // need to bind just the names in the UI and then use this info in an event to
 	    // link to the actual person in the db
 	    self.newPersonName = ko.observable();
-	    
+
 	    self.dad = ko.observable();
 
         //	Functions
-	
+
 	    self.getDad = function() {
             var options = {
                 method: "GET",
                 endpoint: "users/" +self.dadsName
             };
-            
+
             context.ugClient.request(options, function(err, d) {
                 if (err) {
                     context.handleError(err);
                 } else {
-                    var p = personFromEntity(d.entities[0], null);
+                    var p = personFromEntity(d, null);
 			        self.dad(p);
 			        self.derefRelations(p);
                 }
@@ -305,7 +297,7 @@ define(function (require) {
                     }
 		        });
 	        }
-            
+
 	        if (parent.spouseLink().length > 0) {
                 options = {
                     method: "GET",
@@ -334,7 +326,7 @@ define(function (require) {
                 method: "GET",
                 type: "users"
             };
-            
+
             context.ugClient.request(options, function(err, resp) {
                 var ps = [];
 			    for (var i=0; i < resp.entities.length; i++) {
@@ -346,7 +338,7 @@ define(function (require) {
 			    self.updatePeopleNames();
 		    });
 	    };
-	    
+
         /*
          * This method traverses the family tree handling things that need to be
          * done after bootstrap has done modal closings.
@@ -357,7 +349,7 @@ define(function (require) {
                 self.sweep(self.dad());
                 return;
             }
-            
+
             for (var i=0; i < person.kids().length; i++) {
                 self.sweep(person.kids()[i]);
             }
@@ -366,11 +358,11 @@ define(function (require) {
                 person.spouse(null);
                 person.spouseLink(null);
             }
-            
+
             person.kids.remove(function(k) {
                 return k.markedForDelete;
             });
-            
+
             return;
         };
 
@@ -383,4 +375,3 @@ define(function (require) {
         template: html
     };
 });
-
