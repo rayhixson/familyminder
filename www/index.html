@@ -15,17 +15,17 @@
     <link rel="stylesheet" href="lib/jquery.fancybox-thumbs.css?v=1.0.7" type="text/css" media="screen" />
     
     <!-- Our CSS -->
-    <link rel="stylesheet" type="text/css" href="css/main.css"/>
+    <link rel="stylesheet" type="text/css" href="css/custom.css"/>
     
   </head>
   <body>
-    
+    <div class="navbar-container"> 
     <nav class="navbar navbar-default navbar-fixed-top">
-      <div class="container minder-container">
         <div data-bind="with: context" class="navbar-header">
-          <a class="navbar-brand"
-             data-bind="text: 'Family \'Minder: ' + familyName(), attr: {href: homeUrl()}"
-             href="/"></a>
+          <span class="navbar-brand logo">Family 'Minder</span>
+          <div class="familyName"><a class="navbar-familyName"
+             data-bind="text: familyName(), attr: {href: homeUrl()}"
+             href="/"></a></div>
         </div>
         <div class="navbar-collapse collapse" data-bind="with: context">
           <ul class="nav navbar-nav">
@@ -43,9 +43,9 @@
             <li><a href="#" data-bind="click: toggleMode, text: modeText"></a></li>
           </ul>
         </div>
-      </div>
+      
     </nav>
-
+    </div>
     <!--
         ***************************
         MAIN BODY / VIEW CONTROLLER
