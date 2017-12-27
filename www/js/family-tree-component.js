@@ -277,45 +277,41 @@ define(function (require) {
 	        if (parent.kidsLink()) {
 		        var kds = [];
 
-                var options = {
-                    method: "GET",
-                    endpoint: parent.kidsLink()
-                };
+				console.log("-------> " + parent.kidsLink())
 
-                context.ugClient.request(options, function(err, kdata) {
-                    if (err) {
-                        context.handleError(err);
-                    } else {
-			            var len = kdata.entities.length;
-			            for (var i=0; i < len; i++) {
-				            var p = personFromEntity(kdata.entities[i], parent);
+				var len = parent.kidsLink().length;
+				for (var i=0; i < len; i++) {
+					var options = {
+						method: "GET",
+						endpoint: "users/" + parent.kidsLink()[i]
+					};
+
+					context.ugClient.request(options, function(err, kdata) {
+						if (err) {
+							context.handleError(err);
+						} else {
+				            var p = personFromEntity(kdata, parent);
                             parent.kids.push(p);
                             p.parent(parent);
 				            self.derefRelations(p);
 			            }
-
-                    }
-		        });
+					});
+				}
 	        }
 
 	        if (parent.spouseLink().length > 0) {
                 options = {
                     method: "GET",
-                    endpoint: parent.spouseLink()
+                    endpoint: "users/" + parent.spouseLink()
                 };
 
                 context.ugClient.request(options, function(err, kdata) {
                     if (err) {
                         context.handleError(err);
                     } else {
-                        // broken spouse link?
-                        if (!kdata.entities[0]) {
-                            // this means they had a spouse but don't anymore
-                        } else {
-			                var p = personFromEntity(kdata.entities[0], null);
-			                parent.spouse(p);
-			                parent.spouseUuid(p.uuid());
-                        }
+			            var p = personFromEntity(kdata, null);
+			            parent.spouse(p);
+			            parent.spouseUuid(p.uuid());
                     }
 		        });
 	        }
