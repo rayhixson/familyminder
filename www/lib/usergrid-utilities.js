@@ -81,12 +81,14 @@ define(function(require) {
     UgClient.prototype.request = function(options, callback) {
         var uri = this._buildUrl();
 
+		console.log("--===--> " + options.endpoint)
+
         // admin type request?
-        if (options.endpoint.startsWith("management")) {
+        if (options.endpoint.toString().startsWith("management")) {
             uri = this.ugHost;
         }
         
-        if (!options.endpoint.startsWith('/')) {
+        if (!options.endpoint.toString().startsWith('/')) {
             uri += '/';
         }
         uri += options.endpoint;
@@ -128,10 +130,12 @@ define(function(require) {
 			    console.log("Fail to "+method+": URL="+uri+"; " + status +", " + err + ", "+ xhr.responseText);
                 var e = null;
                 if (xhr.responseText) {
+					/*
                     var r = JSON.parse(xhr.responseText);
                     e = r.error_description
                         ? r.error_description
                         : xhr.responseText;
+*/
                 }
                 if (!err) {
                     err = "Unknown failure";
@@ -140,7 +144,7 @@ define(function(require) {
                     err = e;
                 }
                 
-                callback(err, xhr.responseText);
+                callback(err + ": " + xhr.responseText, xhr.responseText);
 	        });
     };
 
