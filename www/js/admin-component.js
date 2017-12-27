@@ -89,7 +89,7 @@ define(function (require) {
                 
             self.ugApplications.removeAll();
             
-            console.log("--> Get an admin token ...");
+            console.log("--> Get an admin token for admin: " + context.minderAdminName());
             self.ugClient.login(context.minderAdminName(), context.minderAdminPassword(), function(err, response) {
                 if (err) {
                     context.handleError(err);

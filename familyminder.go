@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"regexp"
+	"runtime/debug"
 	"strings"
 )
 
@@ -51,6 +52,7 @@ func mgmtHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// this is where the admin logs in - just let it go
 		log.Printf("Allowing management login indiscriminately")
 		okResponse(w, &login)
 	case "orgs":
@@ -112,6 +114,8 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 			saveUserHandler(w, family, parts[4], buf.Bytes())
 		case "POST":
 			createNewUserHandler(w, family, buf.Bytes())
+		case "DELETE":
+			deleteUserHandler(w, family, parts[4])
 		default:
 			log.Printf("Unknown [users] method: %v\n", r.Method)
 		}
@@ -131,6 +135,14 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 		default:
 			log.Printf("Unknown [children] method: %v\n", r.Method)
 		}
+	case "spouse":
+		userID := parts[4]
+		switch r.Method {
+		case "POST":
+			addSpouseHandler(w, family, userID, parts[6])
+		default:
+			log.Printf("Unknown [spouse] method: %v\n", r.Method)
+		}
 	default:
 		log.Printf("Unknown action: %v", action)
 	}
@@ -139,6 +151,38 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 func logoutUserHandler(w http.ResponseWriter, family, userID string) {
 	log.Printf("Logout: which is currently a noop")
 	okResponse(w, nil)
+}
+
+func addSpouseHandler(w http.ResponseWriter, family, userID, spouseID string) {
+	spouse, err := GetUser(family, spouseID)
+	if err != nil {
+		handleErr(w, err)
+		return
+	}
+
+	user, err := GetUser(family, userID)
+	if err != nil {
+		handleErr(w, err)
+		return
+	}
+
+	user.AddSpouse(spouse)
+	okResponse(w, &spouse)
+}
+
+func deleteUserHandler(w http.ResponseWriter, family, userID string) {
+	user, err := GetUser(family, userID)
+	if err != nil {
+		handleErr(w, err)
+		return
+	}
+
+	err = user.Delete()
+	if err != nil {
+		handleErr(w, err)
+		return
+	}
+	okResponse(w, &user)
 }
 
 func addChildHandler(w http.ResponseWriter, family, parentID, childID string) {
@@ -155,6 +199,7 @@ func addChildHandler(w http.ResponseWriter, family, parentID, childID string) {
 	}
 
 	parent.AddChild(child)
+	okResponse(w, &parent)
 }
 
 func createNewUserHandler(w http.ResponseWriter, family string, buf []byte) {
@@ -162,6 +207,17 @@ func createNewUserHandler(w http.ResponseWriter, family string, buf []byte) {
 	err := json.Unmarshal(buf, &u)
 	if err != nil {
 		handleErr(w, err)
+		return
+	}
+
+	existingUser, err := GetUserByName(family, u.Username)
+	if err != nil && err != ErrUserNotFound {
+		handleErr(w, err)
+		return
+	}
+
+	if existingUser != nil {
+		handleErr(w, fmt.Errorf("User [%v] for family [%v] exists", u.Username, family))
 		return
 	}
 
@@ -198,7 +254,13 @@ func saveUserHandler(w http.ResponseWriter, family string, who string, buf []byt
 }
 
 func getUsersHandler(w http.ResponseWriter, family string, who string) {
-	u, err := GetUser(family, who)
+	var u *User
+	var err error
+	if IsID(who) {
+		u, err = GetUser(family, who)
+	} else {
+		u, err = GetUserByName(family, who)
+	}
 
 	if err != nil {
 		handleErr(w, err)
@@ -216,8 +278,13 @@ func tokenHandler(w http.ResponseWriter, family string, buf []byte) {
 	}
 
 	log.Printf("tokenHandler: Family: %v, body: %+v", family, login)
+	_, err = GetUserByName(family, login.Username)
 
-	okResponse(w, &login)
+	if err != nil {
+		handleErr(w, err)
+	} else {
+		okResponse(w, &login)
+	}
 }
 
 func okResponse(w http.ResponseWriter, thing interface{}) {
@@ -237,6 +304,7 @@ func okResponse(w http.ResponseWriter, thing interface{}) {
 
 func handleErr(w http.ResponseWriter, e error) {
 	log.Printf("ERROR RESPONSE: %v", e)
+	debug.PrintStack()
 	http.Error(w, e.Error(), http.StatusInternalServerError)
 }
 
