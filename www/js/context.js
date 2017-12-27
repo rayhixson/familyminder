@@ -20,9 +20,9 @@ define(function (require) {
         };
 
         self.ugClient = null;
-        var pub = "http://52.33.68.137:8080";
-        var local = window.location.protocol + "//"
-                + window.location.hostname + ":8080";
+        var pub = "http://localhost:9090";
+        var local = window.location.protocol + "/"
+                + window.location.hostname + ":9090";
         
         self.ugHost = ko.observable(self.get(HOST_KEY, pub));
         self.ugOrganization = ko.observable(self.get(ORG_NAME_KEY, "orgminder"));
@@ -35,7 +35,7 @@ define(function (require) {
 	    self.minderAdminPassword = ko.observable(self.get(ADMIN_PASS_KEY, "foobar"));
         
 	    self.familyName = ko.observable(self.get(APP_NAME_KEY, "Blork"));
-	    self.familyAdminName = ko.observable("Dad");
+	    self.familyAdminName = ko.observable("Bob");
 	    self.familyAdminPassword = ko.observable("foobar");
 
         self.showErrorAlert = ko.observable(false);
