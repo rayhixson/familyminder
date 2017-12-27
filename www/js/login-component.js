@@ -20,7 +20,7 @@ define(function (require) {
                                                   context.familyName(),
                                                   false);
 
-            context.ugClient.login(context.familyAdminName(), context.familyAdminPassword(), function(err, reseponse) {
+            context.ugClient.login(context.familyAdminName(), context.familyAdminPassword(), function(err, response) {
                 if (err) {
                     context.handleError(err);
                 } else {

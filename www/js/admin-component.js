@@ -30,7 +30,7 @@ define(function (require) {
                     } else {
                         var options = {
                             method:'POST',
-                            endpoint: 'management/orgs/'+context.ugOrganization()+'/apps',
+                            endpoint: 'management/orgs/',
                             body: {
                                 name: context.familyName()
                             }
@@ -89,14 +89,14 @@ define(function (require) {
                 
             self.ugApplications.removeAll();
             
-            console.log("--> Get an admin token ...");
+            console.log("--> Get an admin token for admin: " + context.minderAdminName());
             self.ugClient.login(context.minderAdminName(), context.minderAdminPassword(), function(err, response) {
                 if (err) {
                     context.handleError(err);
                 } else {
                     var options = {
                         method: "GET",
-                        endpoint: "management/orgs/" + context.ugOrganization() + "/apps"
+                        endpoint: "management/orgs"
                     };
 
                     self.ugClient.request(options, function(err, data) {
@@ -104,9 +104,8 @@ define(function (require) {
                             context.handleError("Failed to retrieve existing Organizations: " + err);
                         } else {
                             //fill the array
-                            for (var a in data.data) {
-                                var n = a.split("/")[1];
-                                var appName = n.slice(0,1).toUpperCase() + n.slice(1);
+							for (var i=0; i < data.length; i++) {
+                                var appName = data[i].name.toUpperCase();
                                 self.ugApplications.push(new UgApp(appName));
                             }
                         }
