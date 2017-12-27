@@ -8,43 +8,72 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico"/>
 
     <link rel="stylesheet" href="lib/bootstrap-3.2.0.min.css"/>
-    <!-- Add fancyBox -->
+    <!-- Add fancyBox
     <link rel="stylesheet" href="lib/jquery.fancybox.css?v=2.1.5" type="text/css" media="screen" />
-    <!-- Optionally add helpers - button, thumbnail and/or media -->
+     Optionally add helpers - button, thumbnail and/or media
     <link rel="stylesheet" href="lib/jquery.fancybox-buttons.css?v=1.0.5" type="text/css" media="screen" />
     <link rel="stylesheet" href="lib/jquery.fancybox-thumbs.css?v=1.0.7" type="text/css" media="screen" />
-    
+     -->
     <!-- Our CSS -->
     <link rel="stylesheet" type="text/css" href="css/main.css"/>
     
   </head>
   <body>
-    
-    <nav class="navbar navbar-default navbar-fixed-top">
-      <div class="container minder-container">
-        <div data-bind="with: context" class="navbar-header">
-          <a class="navbar-brand"
-             data-bind="text: 'Family \'Minder: ' + familyName(), attr: {href: homeUrl()}"
-             href="/"></a>
+      <div class="navbar navbar-inverse navbar-fixed-top">
+          <div class="container">
+            <div class="navbar-header">
+              <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="index.html">Family 'Minder
+              </a>
+            </div>
+            <div data-bind="with: context" class="navbar-collapse collapse">
+              
+              <ul class="nav navbar-nav">
+               <li class="active"><a class="navbar-brand"
+                data-bind="text: 'Last Name: ' + familyName()"
+                href="/"></a></li>
+                  <li><a href="#">Menu1</a></li>
+                  <li><a href="#">Menu2</a></li>
+                  <li><a href="#">Help</a></li>
+                  <li><a href="#">About Us</a></li>
+                </li>
+              </ul>
+                <ul class="nav navbar-nav navbar-right">
+                  <li><a href="#">Sign In</a></li>
+                </ul>
+              </div><!--/.nav-collapse -->
+          </div>
         </div>
-        <div class="navbar-collapse collapse" data-bind="with: context">
+    <!-- <nav class="navbar navbar-default navbar-fixed-top"> 
+       <div class="logo"><h1> Family 'Minder</h1></div>
+      <div class="container minder-container"> -->
+        <!-- <div data-bind="with: context" class="navbar-header">
+           <a class="navbar-brand"
+             data-bind="text: familyName(), attr: {href: homeUrl()}"
+             href="/"></a> 
+        </div> -->
+        <!--<div class="navbar-collapse collapse" data-bind="with: context">
           <ul class="nav navbar-nav">
             <li><a href="#">Help</a></li>
-            <li><a href="mailto:info@glassbeadinc.com">Contact Me</a></li>
+            <li><a href="mailto:info@glassbeadinc.com">Contact Me</a></li>-->
             <!--ko if: userLoggedIn-->
-            <li><a href="#" data-bind="click: logout">Logout</a></li>
+            <!-- <li><a href="#" data-bind="click: logout">Logout</a></li> -->
             <!--/ko-->
             <!--ko ifnot: userLoggedIn-->
-            <li><a href="#" data-bind="click: $root.views().LOGIN.setCurrent">Login</a></li>
+            <!-- <li><a href="#" data-bind="click: $root.views().LOGIN.setCurrent">Login</a></li> -->
             <!--/ko-->
-            <li><a href="#" data-bind="click: $root.views().ADMIN.setCurrent">Admin</a></li>
-          </ul>
-          <ul class="nav navbar-nav navbar-right">
-            <li><a href="#" data-bind="click: toggleMode, text: modeText"></a></li>
-          </ul>
-        </div>
-      </div>
-    </nav>
+            <!-- <li><a href="#" data-bind="click: $root.views().ADMIN.setCurrent">Admin</a></li> -->
+          <!-- </ul> -->
+          <!-- <ul class="nav navbar-nav navbar-right"> -->
+            <!-- <li><a href="#" data-bind="click: toggleMode, text: modeText"></a></li> -->
+          <!-- </ul> -->
+        <!-- </div>--> 
+      <!-- </div>
+    </nav> -->
 
     <!--
         ***************************
@@ -91,7 +120,7 @@
     
     <footer class="footer">
       <span class="col-sm-3"></span>
-      <span class="col-sm-6" style="text-align: center">Posted by: Tony Alferez<br/>
+      <span class="col-sm-6" style="text-align: center">&copy Tony Alferez<br/>
 	    Contact information: <a href="mailto:info@glassbeadinc.com">tony@gbservices.com</a>.</span>
       <span class="col-sm-3"></span>
     </footer>
