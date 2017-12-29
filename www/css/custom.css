@@ -3,6 +3,29 @@ body {
     padding-top: 70px;
     margin-bottom: 60px;
 }
+@media (min-width: 992px) {
+    body {
+      padding-top: 56px;
+    }
+  }
+  
+  .business-header {
+    height: 50vh;
+    min-height: 300px;
+    background: url("/images/teamAmerica.jpg") center center no-repeat scroll;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    background-size: cover;
+    -o-background-size: cover;
+  }
+  
+  .card {
+    height: 100%;
+  }
+  .bg-dark {
+    background-color: steelblue!important;
+}
+
 div.minder-container {
     background-color:#fff;
     font-weight: 500;
@@ -211,7 +234,11 @@ html {
   width: 100%;
   /* Set the fixed height of the footer here */
   height: 60px;
-  background-color: #fff;
+  margin-top: 50px;
+
+}
+.footer a {
+    color: black;
 }
 /*callout styles*/
 .callout {
@@ -242,3 +269,9 @@ html {
     border: none;
 }
 
+.card-img-top {
+    /* width: 100%; */
+    height: 300px;
+    border-top-left-radius: calc(.25rem - 1px);
+    border-top-right-radius: calc(.25rem - 1px);
+}

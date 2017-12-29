@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<!--
+rays comment
+-->
+
+<html lang="en">
+  <head>
+	<meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    
+    <title>Family Minder</title>
+    
+    <link rel="icon" type="image/x-icon" href="favicon.ico"/>
+
+    <link rel="stylesheet" href="lib/bootstrap-3.2.0.min.css"/>
+    <!-- Add fancyBox -->
+    <link rel="stylesheet" href="lib/jquery.fancybox.css?v=2.1.5" type="text/css" media="screen" />
+    <!-- Optionally add helpers - button, thumbnail and/or media -->
+    <link rel="stylesheet" href="lib/jquery.fancybox-buttons.css?v=1.0.5" type="text/css" media="screen" />
+    <link rel="stylesheet" href="lib/jquery.fancybox-thumbs.css?v=1.0.7" type="text/css" media="screen" />
+    <!--JQuery-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <!-- Our CSS -->
+    <link rel="stylesheet" type="text/css" href="css/custom.css"/>
+    
+  </head>
+  <body>
+    <div class="navbar-container"> 
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div data-bind="with: context" class="navbar-header">
+          <span class="navbar-brand logo">Family 'Minder</span>
+          <div class="familyName"><a class="navbar-familyName"
+             data-bind="text: familyName(), attr: {href: homeUrl()}"
+             href="/"></a></div>
+        </div>
+        <div class="navbar-collapse collapse" data-bind="with: context">
+          <ul class="nav navbar-nav">
+            <li><a href="#">Help</a></li>
+            <li><a href="mailto:info@glassbeadinc.com">Contact Me</a></li>
+            <!--ko if: userLoggedIn-->
+            <li><a href="#" data-bind="click: logout">Logout</a></li>
+            <!--/ko-->
+            <!--ko ifnot: userLoggedIn-->
+            <li><a href="#" data-bind="click: $root.views().LOGIN.setCurrent">Login</a></li>
+            <!--/ko-->
+            <li><a href="#" data-bind="click: $root.views().ADMIN.setCurrent">Admin</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="#" data-bind="click: toggleMode, text: modeText"></a></li>
+          </ul>
+        </div>
+      
+    </nav>
+    </div>
+    <!--
+        ***************************
+        MAIN BODY / VIEW CONTROLLER
+        ***************************
+      -->
+    
+    <!--ko with: views-->
+    <!--ko if: LOGIN.isCurrent-->
+    <login-component></login-component>
+    <!--/ko-->
+
+    <!--ko if: TREE.isCurrent--> 
+    <family-tree-component></family-tree-component>
+    <!--/ko-->
+
+    <!--ko if: ADMIN.isCurrent-->
+    <admin-component></admin-component>
+    <!--/ko-->
+    <!--/ko-->
+      
+    <!-- MODAL display of errors and alerts -->
+    <div class="modal fade" role="dialog" id="errmodal" data-keyboard="true"
+         data-bind="toggleModal: context().showErrorAlert">
+      <div class="modal-dialog modal-md">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"
+                    aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Error</h4>
+          </div>
+          
+          <div class="modal-body" data-bind="text: context().errorMessage"></div>
+          
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default"
+                    data-bind="click: context().stopShowErrorAlert">OK</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--ko with: context-->
+    <!--/ko-->
+ 
+ 
+    <footer id="footer"></footer>
+    
+    <!-- LOAD JS -->
+    <script data-main="js/main" src="lib/require.js"></script>
+    <script> $("#footer").load("footer.html"); </script> 
+    
+  </body>
+</html>
