@@ -7,7 +7,7 @@ define(function (require) {
 
     function personFromEntity(entity, parent) {
 	    var p = new Person(entity.uuid, entity.username, entity.birthday,
-			               entity.email, entity.picture, entity.picture2);
+			               entity.email, entity.picture, entity.picture2, entity.is_spouse);
 
 	    if (entity.child_ids) {
 			p.kidsLink(entity.child_ids);
@@ -21,7 +21,7 @@ define(function (require) {
 	    return p;
     }
 
-    function Person(uuid, name, bday, email, img, img2) {
+    function Person(uuid, name, bday, email, img, img2, isSpouse) {
 	    var self = this;
         self.uuid = ko.observable(uuid);
         self.username = ko.observable(name);
@@ -33,7 +33,7 @@ define(function (require) {
         // the relationship exists - it means it did at one time
         self.kidsLink = ko.observable("");
         self.spouseLink = ko.observable("");
-        self.isSpouse = ko.observable(false);
+        self.isSpouse = ko.observable(isSpouse);
 
 	    // need to bind just the names in the UI and then use this info in an event to
 	    // link to the actual person in the db
