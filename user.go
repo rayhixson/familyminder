@@ -40,27 +40,16 @@ func GetUser(family, uuid string) (*User, error) {
 	return users[0], nil
 }
 
-func GetUserByName(family, name string) (*User, error) {
-	users, err := GetUsers(family, func(u *User) bool {
-		return u.Username == name
-	})
-	if err != nil {
-		return nil, err
-	}
-	fmt.Printf("Returning: %+v", *users[0])
-	return users[0], nil
-}
-
 func GetUsers(family string, filter FilterFunc) (users []*User, err error) {
-	dir, err := familyDir(family)
-	if err != nil {
-		return
-	}
+	dir := getFamilyDir(family)
 
 	usersInDir, err := ioutil.ReadDir(dir)
 	if err != nil {
-		return users, errors.Wrap(err, "Failed to read data")
+		fmt.Printf("Failed to read family dir: %v, %v", family, err)
+		return users, ErrUserNotFound
 	}
+
+	all := make([]*User, 0)
 
 	for _, file := range usersInDir {
 		if !strings.HasSuffix(file.Name(), ".json") {
@@ -76,6 +65,8 @@ func GetUsers(family string, filter FilterFunc) (users []*User, err error) {
 		if err != nil {
 			return users, errors.Wrap(err, "Failed to unmarshal")
 		}
+		all = append(all, &u)
+
 		if filter != nil {
 			if filter(&u) {
 				users = append(users, &u)
@@ -87,7 +78,54 @@ func GetUsers(family string, filter FilterFunc) (users []*User, err error) {
 	if len(users) < 1 {
 		return users, ErrUserNotFound
 	}
+
+	// fill in the spouse info for each user we want to return
+	for _, m := range users {
+		if isSpouse(m.Uuid, all) {
+			m.IsSpouse = true
+			continue
+		}
+	}
+
 	return users, nil
+}
+
+func GetFamilyRoot(family string) (*User, error) {
+	members, err := GetUsers(family, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, m := range members {
+		if !hasReferences(m.Uuid, members) {
+			return m, nil
+		}
+	}
+
+	return nil, fmt.Errorf("Failed to find dad for family: %v", family)
+}
+
+func hasReferences(uuid string, members []*User) bool {
+	for _, j := range members {
+		if j.SpouseUuid == uuid {
+			return true
+		}
+		for _, k := range j.ChildIDs {
+			if k == uuid {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func isSpouse(uuid string, members []*User) bool {
+	for _, j := range members {
+		if j.SpouseUuid == uuid {
+			return true
+		}
+	}
+	return false
 }
 
 func (u User) Save() error {
@@ -100,7 +138,7 @@ func (u User) Save() error {
 		return errors.Wrap(err, "Failed to marshal user")
 	}
 
-	dir, err := familyDir(u.Familyname)
+	dir, err := createFamilyDir(u.Familyname)
 	if err != nil {
 		return err
 	}
@@ -110,6 +148,9 @@ func (u User) Save() error {
 
 // AddChild updates this parent with the child ref
 func (u User) AddChild(child *User) error {
+	if u.IsSpouse {
+		return errors.New("Cannot add a child to a spouse")
+	}
 	u.ChildIDs = append(u.ChildIDs, child.Uuid)
 	return u.Save()
 }
@@ -163,15 +204,20 @@ func (u User) Delete() error {
 		}
 	}
 
-	return nil
+	dir := getFamilyDir(u.Familyname)
+
+	return os.Remove(dir + "/" + u.Uuid + ".json")
 }
 
-func familyDir(family string) (string, error) {
-	dir := fmt.Sprintf("%s/%s", DATA_DIR, family)
+func getFamilyDir(family string) string {
+	return fmt.Sprintf("%s/%s", DATA_DIR, family)
+}
+
+func createFamilyDir(family string) (string, error) {
+	dir := getFamilyDir(family)
 	err := os.MkdirAll(dir, 0777)
 	if err != nil {
 		return dir, errors.Wrap(err, "Failed to get family dir")
 	}
-
 	return dir, nil
 }

@@ -166,7 +166,12 @@ func addSpouseHandler(w http.ResponseWriter, family, userID, spouseID string) {
 		return
 	}
 
-	user.AddSpouse(spouse)
+	err = user.AddSpouse(spouse)
+	if err != nil {
+		handleErr(w, err)
+		return
+	}
+
 	okResponse(w, &spouse)
 }
 
@@ -198,7 +203,12 @@ func addChildHandler(w http.ResponseWriter, family, parentID, childID string) {
 		return
 	}
 
-	parent.AddChild(child)
+	err = parent.AddChild(child)
+	if err != nil {
+		handleErr(w, err)
+		return
+	}
+
 	okResponse(w, &parent)
 }
 
@@ -209,17 +219,8 @@ func createNewUserHandler(w http.ResponseWriter, family string, buf []byte) {
 		handleErr(w, err)
 		return
 	}
-
-	existingUser, err := GetUserByName(family, u.Username)
-	if err != nil && err != ErrUserNotFound {
-		handleErr(w, err)
-		return
-	}
-
-	if existingUser != nil {
-		handleErr(w, fmt.Errorf("User [%v] for family [%v] exists", u.Username, family))
-		return
-	}
+	fmt.Printf("====> creating new user: %v for family %v\n", u.Username, family)
+	debug.PrintStack()
 
 	u.Uuid = NewID()
 	u.Familyname = family
@@ -239,12 +240,9 @@ func saveUserHandler(w http.ResponseWriter, family string, who string, buf []byt
 		return
 	}
 
-	// delete this code why is it here!!!
-	if u.Uuid == "" {
-		u.Uuid = NewID()
-	}
-
 	u.Familyname = family
+	u.Uuid = who
+
 	err = u.Save()
 	if err != nil {
 		handleErr(w, err)
@@ -259,7 +257,7 @@ func getUsersHandler(w http.ResponseWriter, family string, who string) {
 	if IsID(who) {
 		u, err = GetUser(family, who)
 	} else {
-		u, err = GetUserByName(family, who)
+		u, err = GetFamilyRoot(family)
 	}
 
 	if err != nil {
@@ -278,7 +276,6 @@ func tokenHandler(w http.ResponseWriter, family string, buf []byte) {
 	}
 
 	log.Printf("tokenHandler: Family: %v, body: %+v", family, login)
-	_, err = GetUserByName(family, login.Username)
 
 	if err != nil {
 		handleErr(w, err)
