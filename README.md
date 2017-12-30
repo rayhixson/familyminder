@@ -17,7 +17,9 @@ The following is a high level description of the code but it is assumed that you
 ### <a href="www/index.html">www/index.html</a>
 * The home page, you will see at the bottom the use of require.js and a reference to "main" (see below)
 * In the middle of this page you will see the view rendering - one of these will only be active at any one time and this will render the middle of the page. This code starts with this line:
+
       <!--ko with: views-->
+      
 * Whichever view enum is "current" causes that Knockout ViewModel to render; which is one of:
   * login-component
   * admin-component
