@@ -20,7 +20,7 @@
 	        <div class="form-group">
 		      <label class="control-label col-sm-5" for="name">Family Admin Name</label>
 		      <div class="col-sm-7">
-		        <input data-bind="value: familyAdminName" class="form-control" id="name"/>
+		        <input data-bind="value: familyAdminName" class="form-control" id="admin-name"/>
 		      </div>
 	        </div>
             
@@ -69,7 +69,7 @@
 	        <div class="form-group">
 		      <label class="control-label col-sm-5" for="usergrid-url">Server URL</label>
 		      <div class="col-sm-7">
-		        <input data-bind="value: ugHost" class="form-control" id="usergrid-url"/>
+		        <input data-bind="value: apiHost" class="form-control" id="usergrid-url"/>
 		      </div>
 	        </div>
             
@@ -91,7 +91,7 @@
         </div>
         
         <div class="panel-body">
-          <div data-bind="foreach: ugApplications" class="list-group">
+          <div data-bind="foreach: apiApplications" class="list-group">
             <a href="#" class="list-group-item"
                data-bind="click: goToLogin, text: $data.name"></a>
           </div>

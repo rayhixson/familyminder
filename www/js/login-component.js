@@ -2,7 +2,7 @@ define(function (require) {
     var ko = require('knockout'),
         context = require('js/context'),
         views = require('js/views'),
-        UsergridClient = require('usergrid-utilities'),
+        ApiClient = require('api-client'),
         html = require('text!html/login-component.html');
 
     function LoginViewModel() {
@@ -15,12 +15,11 @@ define(function (require) {
         self.login = function() {
             console.log("--> Login " + context.familyAdminName());
 
-            context.ugClient = new UsergridClient(context.ugHost(),
-                                                  context.ugOrganization(),
-                                                  context.familyName(),
-                                                  false);
+            context.client = new ApiClient(context.apiHost(),
+                                           context.familyName(),
+                                           false);
 
-            context.ugClient.login(context.familyAdminName(), context.familyAdminPassword(), function(err, response) {
+            context.client.login(context.familyAdminName(), context.familyAdminPassword(), function(err, response) {
                 if (err) {
                     context.handleError(err);
                 } else {

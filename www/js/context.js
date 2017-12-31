@@ -1,14 +1,13 @@
 define(function (require) {
     var ko = require("knockout"),
         views = require("js/views"),
-        UsergridClient = require("usergrid-utilities");
+        ApiClient = require("api-client");
 
     var EDIT_MODE_KEY = "fm_edit_mode";
     var ADMIN_NAME_KEY = "fm_admin_name";
     var ADMIN_PASS_KEY = "fm_admin_pass";
-    var APP_NAME_KEY = "fm_ug_app_name";
-    var ORG_NAME_KEY = "fm_ug_org_name";
-    var HOST_KEY = "fm_ug_host";
+    var APP_NAME_KEY = "fm_app_name";
+    var HOST_KEY = "fm_host";
 
         
     var ContextObj = function() {
@@ -19,13 +18,12 @@ define(function (require) {
             return (v ? v : defaultReturnVal);
         };
 
-        self.ugClient = null;
+        self.client = null;
         var pub = "http://localhost:9090";
         var local = window.location.protocol + "/"
                 + window.location.hostname + ":9090";
         
-        self.ugHost = ko.observable(self.get(HOST_KEY, pub));
-        self.ugOrganization = ko.observable(self.get(ORG_NAME_KEY, "orgminder"));
+        self.apiHost = ko.observable(self.get(HOST_KEY, pub));
         
         self.homeUrl = ko.observable(location.origin + location.pathname);
 
@@ -71,7 +69,7 @@ define(function (require) {
 
         self.logout = function() {
             if (self.userLoggedIn()) {
-                self.ugClient.logout(self.familyAdminName(), function(err, resp) {
+                self.client.logout(self.familyAdminName(), function(err, resp) {
                     if (err) {
                         console.log("Failed to Logout: " + err);
                     }
@@ -83,12 +81,11 @@ define(function (require) {
 
         self.setClientFromToken = function() {
             // try to bootstrap from localstorage
-            var client = new UsergridClient(self.ugHost(), self.ugOrganization(),
-                                            self.familyName(), false);
+            var api = new ApiClient(self.apiHost(), self.familyName(), false);
 
-            if (client.isLoggedIn()) {
-                self.ugClient = client;
-                self.familyName(self.ugClient.appName);
+            if (api.isLoggedIn()) {
+                self.client = api;
+                self.familyName(self.client.appName);
             }
         };
 
@@ -100,15 +97,14 @@ define(function (require) {
             self.set(ADMIN_NAME_KEY, self.minderAdminName());
             self.set(ADMIN_PASS_KEY, self.minderAdminPassword());
             self.set(APP_NAME_KEY, self.familyName());
-            self.set(ORG_NAME_KEY, self.ugOrganization());
-            self.set(HOST_KEY, self.ugHost());
+            self.set(HOST_KEY, self.apiHost());
         };
 
 	    // --   INITIALIZE 
         
         // when a user comes to the site and is already logged in
         self.setClientFromToken();
-        if (self.ugClient) {
+        if (self.client) {
             self.userLoggedIn(true);
             views.TREE.setCurrent();
         }

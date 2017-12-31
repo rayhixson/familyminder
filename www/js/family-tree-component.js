@@ -2,7 +2,7 @@ define(function (require) {
     var ko = require('knockout'),
         context = require('js/context'),
         html = require('text!html/family-tree-component.html'),
-        ugClient = require('usergrid-utilities'),
+        ApiClient = require('api-client'),
         $ = require('jquery');
 
     function personFromEntity(entity, parent) {
@@ -126,7 +126,7 @@ define(function (require) {
             };
 
             var person;
-            context.ugClient.request(options, function(err, data) {
+            context.client.request(options, function(err, data) {
                 if (err) {
                     context.handleError(err);
                 } else {
@@ -160,7 +160,7 @@ define(function (require) {
                 }
             };
 
-            context.ugClient.request(options, function(err, data) {
+            context.client.request(options, function(err, data) {
                 if (err) {
                     context.handleError(err);
                 } else {
@@ -175,7 +175,7 @@ define(function (require) {
                 endpoint: 'users/' + self.uuid()
             };
 
-            context.ugClient.request(options, function(err, data) {
+            context.client.request(options, function(err, data) {
                 if (err) {
                     context.handleError(err);
                 } else {
@@ -202,7 +202,7 @@ define(function (require) {
                     // data: null
                 };
 
-                context.ugClient.request(options, function(err, data) {
+                context.client.request(options, function(err, data) {
                     if (err) {
                         context.handleError(err);
                     } else {
@@ -228,7 +228,7 @@ define(function (require) {
                     // data: null
                 };
 
-                context.ugClient.request(options, function(err, data) {
+                context.client.request(options, function(err, data) {
                     if (err) {
                         self.handleError(err);
                     } else {
@@ -261,7 +261,7 @@ define(function (require) {
                 endpoint: "users/" +self.dadsName
             };
 
-            context.ugClient.request(options, function(err, d) {
+            context.client.request(options, function(err, d) {
                 if (err) {
                     context.handleError(err);
                 } else {
@@ -286,7 +286,7 @@ define(function (require) {
 						endpoint: "users/" + parent.kidsLink()[i]
 					};
 
-					context.ugClient.request(options, function(err, kdata) {
+					context.client.request(options, function(err, kdata) {
 						if (err) {
 							context.handleError(err);
 						} else {
@@ -305,7 +305,7 @@ define(function (require) {
                     endpoint: "users/" + parent.spouseLink()
                 };
 
-                context.ugClient.request(options, function(err, kdata) {
+                context.client.request(options, function(err, kdata) {
                     if (err) {
                         context.handleError(err);
                     } else {
@@ -323,7 +323,7 @@ define(function (require) {
                 type: "users"
             };
 
-            context.ugClient.request(options, function(err, resp) {
+            context.client.request(options, function(err, resp) {
                 var ps = [];
 			    for (var i=0; i < resp.entities.length; i++) {
 				    var p = personFromEntity(resp.entities[i], null);

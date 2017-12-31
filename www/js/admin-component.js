@@ -3,7 +3,7 @@ define(function (require) {
         context = require('js/context'),
         html = require('text!html/admin-component.html'),
         views = require('js/views'),
-        UsergridClient = require('usergrid-utilities');
+        ApiClient = require('api-client');
 
     function AdminViewModel() {
         var self = this;
@@ -11,9 +11,9 @@ define(function (require) {
         // bind this to observable to get data from context in html
         self.context = ko.observable(context);
 
-        self.ugApplications = ko.observableArray([]);
+        self.apiApplications = ko.observableArray([]);
 
-        self.ugClient = null;
+        self.client = null;
 
         // Behaviors
         self.createFamily = function() {
@@ -24,7 +24,7 @@ define(function (require) {
             } else {
 
                 console.log("--> Get an admin token ...");
-                self.ugClient.login(context.minderAdminName(), context.minderAdminPassword(), function(err, response) {
+                self.client.login(context.minderAdminName(), context.minderAdminPassword(), function(err, response) {
                     if (err) {
                         context.handleError(err);
                     } else {
@@ -39,12 +39,12 @@ define(function (require) {
                         // CREATE THE APP
                         console.log("--> Make request to create an app");
                         
-                        self.ugClient.request(options, function(err2, resdata) {
+                        self.client.request(options, function(err2, resdata) {
                             if (err2) {
                                 context.handleError("Create App: " + err2);
                             } else {
                                 // now that the app exists, tell the client object
-                                self.ugClient.appName = context.familyName();
+                                self.client.appName = context.familyName();
                                 
                                 // CREATE THE ADMIN USER FOR THE APP
                                 var data = {
@@ -61,7 +61,7 @@ define(function (require) {
 
                                 console.log("--> create admin for family");
                                 
-                                self.ugClient.request(data, function(err3, res3) {
+                                self.client.request(data, function(err3, res3) {
                                     if (err3) {
                                         context.handleError("Create admin for app: "
                                                             + err3);
@@ -82,15 +82,14 @@ define(function (require) {
         };
 
         self.initApplications = function() {
-            self.ugClient = new UsergridClient(context.ugHost(),
-                                               context.ugOrganization(),
-                                               context.familyName(),
-                                               true);
+            self.client = new ApiClient(context.apiHost(),
+                                        context.familyName(),
+                                        true);
                 
-            self.ugApplications.removeAll();
+            self.apiApplications.removeAll();
             
             console.log("--> Get an admin token for admin: " + context.minderAdminName());
-            self.ugClient.login(context.minderAdminName(), context.minderAdminPassword(), function(err, response) {
+            self.client.login(context.minderAdminName(), context.minderAdminPassword(), function(err, response) {
                 if (err) {
                     context.handleError(err);
                 } else {
@@ -99,14 +98,14 @@ define(function (require) {
                         endpoint: "management/orgs"
                     };
 
-                    self.ugClient.request(options, function(err, data) {
+                    self.client.request(options, function(err, data) {
                         if (err) {
                             context.handleError("Failed to retrieve existing Organizations: " + err);
                         } else {
                             //fill the array
 							for (var i=0; i < data.length; i++) {
                                 var appName = data[i].name.toUpperCase();
-                                self.ugApplications.push(new UgApp(appName));
+                                self.apiApplications.push(new ApiApp(appName));
                             }
                         }
                     });
@@ -119,7 +118,7 @@ define(function (require) {
     };
 
     // Represents one app / family - for listing them all
-    function UgApp(name) {
+    function ApiApp(name) {
         var self = this;
         self.name = ko.observable(name);
         

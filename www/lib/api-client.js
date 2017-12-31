@@ -7,35 +7,33 @@ define(function(require) {
     /*
      * 
      */
-    var UgClient = function(ugHost, ugOrganization, appName, isAdminClient) {
+    var ApiClient = function(apiHost, appName, isAdminClient) {
         this.isAdminClient = isAdminClient;
         
-        this.ugHost = ugHost;
-        this.ugOrganization = ugOrganization;
+        this.apiHost = apiHost;
         this.appName = appName;
 
-        this.tokenKey = isAdminClient ? "fm_ug_admin_token" : "fm_ug_family_token";
+        this.tokenKey = isAdminClient ? "fm_admin_token" : "fm_family_token";
 
         this.token = localStorage.getItem(this.tokenKey);
     };
 
-    UgClient.prototype._buildUrl = function() {
-        return this.ugHost + '/' + this.ugOrganization +
-            '/' + this.appName;
+    ApiClient.prototype._buildUrl = function() {
+        return this.apiHost + '/orgminder/' + this.appName;
     };
 
-    UgClient.prototype.isLoggedIn = function() {
+    ApiClient.prototype.isLoggedIn = function() {
         return (this.token != null);
     };
 
     /**
      * Auth a user and set the token in local storage for future calls
      */
-    UgClient.prototype.login = function(username, password, callback) {
+    ApiClient.prototype.login = function(username, password, callback) {
         var url = this._buildUrl() + "/token";
         
         if (this.isAdminClient) {
-            url = this.ugHost + "/management/token";
+            url = this.apiHost + "/management/token";
         }
 
         // don't reuse the old token if there is one
@@ -59,7 +57,7 @@ define(function(require) {
         });
     };
 
-    UgClient.prototype.logout = function(username, callback) {
+    ApiClient.prototype.logout = function(username, callback) {
         localStorage.removeItem(this.tokenKey);
         
         var url = this._buildUrl() + "/users/" + username + "/revoketokens";
@@ -78,14 +76,14 @@ define(function(require) {
      * }
      *
      */
-    UgClient.prototype.request = function(options, callback) {
+    ApiClient.prototype.request = function(options, callback) {
         var uri = this._buildUrl();
 
 		console.log("--===--> " + options.endpoint)
 
         // admin type request?
         if (options.endpoint.toString().startsWith("management")) {
-            uri = this.ugHost;
+            uri = this.apiHost;
         }
         
         if (!options.endpoint.toString().startsWith('/')) {
@@ -96,7 +94,7 @@ define(function(require) {
         this._http(uri, options.method, options.body, callback);
     };
 
-    UgClient.prototype._http = function(uri, method, data, callback) {
+    ApiClient.prototype._http = function(uri, method, data, callback) {
 	    var headers = null;
 	    if (method == 'POST' || method == 'PUT') {
 		    headers = {
@@ -148,5 +146,5 @@ define(function(require) {
 	        });
     };
 
-    return UgClient;
+    return ApiClient;
 });
