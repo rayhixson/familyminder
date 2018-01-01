@@ -1,7 +1,4 @@
 <!DOCTYPE html>
-<!--
-rays comment
--->
 
 <html lang="en">
   <head>
@@ -18,8 +15,6 @@ rays comment
     <!-- Optionally add helpers - button, thumbnail and/or media -->
     <link rel="stylesheet" href="lib/jquery.fancybox-buttons.css?v=1.0.5" type="text/css" media="screen" />
     <link rel="stylesheet" href="lib/jquery.fancybox-thumbs.css?v=1.0.7" type="text/css" media="screen" />
-    <!--JQuery-->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <!-- Our CSS -->
     <link rel="stylesheet" type="text/css" href="css/custom.css"/>
     
@@ -29,8 +24,8 @@ rays comment
     <nav class="navbar navbar-default navbar-fixed-top">
         <div data-bind="with: context" class="navbar-header">
           <span class="navbar-brand logo">Family 'Minder</span>
-          <div class="familyName"><a class="navbar-familyName"
-             data-bind="text: familyName(), attr: {href: homeUrl()}"
+          <div class="orgName"><a class="navbar-orgName"
+             data-bind="text: orgName(), attr: {href: homeUrl()}"
              href="/"></a></div>
         </div>
         <div class="navbar-collapse collapse" data-bind="with: context">
@@ -100,7 +95,6 @@ rays comment
     
     <!-- LOAD JS -->
     <script data-main="js/main" src="lib/require.js"></script>
-    <script> $("#footer").load("footer.html"); </script> 
     
   </body>
 </html>

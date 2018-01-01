@@ -14,21 +14,15 @@
 	      <form class="form-horizontal" role="form" data-bind="submit: login" >
             <!--ko with: context-->
 	        <div class="form-group">
-		      <label class="control-label col-sm-5" for="familyname">Family Name</label>
+		      <label class="control-label col-sm-5" for="username">Name</label>
 		      <div class="col-sm-7">
-		        <input data-bind="value: familyName" class="form-control" id="familyname"/>
+		        <input data-bind="value: userName" class="form-control" id="username"/>
 		      </div>
 	        </div>
 	        <div class="form-group">
-		      <label class="control-label col-sm-5" for="name">Family Admin Name</label>
+		      <label class="control-label col-sm-5" for="password">Password</label>
 		      <div class="col-sm-7">
-		        <input data-bind="value: familyAdminName" class="form-control" id="name"/>
-		      </div>
-	        </div>
-	        <div class="form-group">
-		      <label class="control-label col-sm-5" for="password">Family Admin Password</label>
-		      <div class="col-sm-7">
-		        <input type="password" data-bind="value: familyAdminPassword" class="form-control" id="password"/>
+		        <input type="password" data-bind="value: password" class="form-control" id="password"/>
 		      </div>
 	        </div>
 	        <div class="form-group">

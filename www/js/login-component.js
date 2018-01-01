@@ -13,19 +13,16 @@ define(function (require) {
         // Behaviors
 
         self.login = function() {
-            console.log("--> Login " + context.familyAdminName());
+            console.log("--> Login " + context.userName());
 
-            context.client = new ApiClient(context.apiHost(),
-                                           context.familyName(),
-                                           false);
+            context.client = new ApiClient(context);
 
-            context.client.login(context.familyAdminName(), context.familyAdminPassword(), function(err, response) {
+            context.client.login(context.userName(), context.password(), function(err, response) {
                 if (err) {
                     context.handleError(err);
                 } else {
                     context.userLoggedIn(true);
-                    context.saveConfigs();
-                    views.TREE.setCurrent();
+                    views.ADMIN.setCurrent();
                 }
             });
         };

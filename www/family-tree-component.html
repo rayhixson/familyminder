@@ -14,11 +14,11 @@
 <!-- START person template -->
 <script type="text/html" id="person-template">
   <div class="person">
-    <a class="fancybox" rel="gallery" data-bind="attr: { 'title': username, 'href': image2 }">
+    <a class="fancybox" rel="gallery" data-bind="attr: { 'title': name, 'href': image2 }">
       <img data-bind="attr: { src: image }" class="img-circle">
     </a>
     <a data-bind="attr: { href: 'mailto:' + email() }">
-      <span data-bind="text: username" class="divName"></span>
+      <span data-bind="text: name" class="divName"></span>
     </a>
     
     <span data-bind="text: bday" class="divBDay"></span>
@@ -114,16 +114,16 @@
         <form role="form" data-bind="submit: savePerson">
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal">&times;</button>
-            <h4 class="modal-title" data-bind="text: 'Edit ' + username()"></h4>
+            <h4 class="modal-title" data-bind="text: 'Edit ' + name()"></h4>
           </div>
           
           <div class="modal-body">
 			<div class="row">
 			  <div class="col-sm-12">
 				<div class="form-group">
-				  <label class="control-label col-sm-2" for="username">Name:</label>
+				  <label class="control-label col-sm-2" for="name">Name:</label>
 				  <div class="col-sm-10">
-					<input data-bind="value: username" class="form-control" id="username"
+					<input data-bind="value: name" class="form-control" id="name"
                            autofocus=""/>
 				  </div>
 				</div>
@@ -178,7 +178,7 @@
         <form role="form" data-bind="submit: addKid">
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal">&times;</button>
-            <h4 class="modal-title" data-bind="text: 'Add Child to ' + username()"></h4>
+            <h4 class="modal-title" data-bind="text: 'Add Child to ' + name()"></h4>
           </div>
           
           <div class="modal-body">
@@ -186,10 +186,10 @@
 			  <div class="col-sm-12">
 			    
 				<div class="form-group">
-				  <label class="control-label col-sm-2" for="username">Name:</label>
+				  <label class="control-label col-sm-2" for="name">Name:</label>
 				  <div class="col-sm-10">
-					<input data-bind="value: newChildUsername" class="form-control"
-                           autofocus="" id="username"/>
+					<input data-bind="value: newChildName" class="form-control"
+                           autofocus="" id="name"/>
 				  </div>
 				</div>
 			  </div>
@@ -219,17 +219,17 @@
         <form role="form" data-bind="submit: addSpouse">
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal">&times;</button>
-            <h4 class="modal-title" data-bind="text: 'Add Spouse to ' + username()"></h4>
+            <h4 class="modal-title" data-bind="text: 'Add Spouse to ' + name()"></h4>
           </div>
           
           <div class="modal-body">
 			<div class="row">
 			  <div class="col-sm-12">
 				<div class="form-group">
-				  <label class="control-label col-sm-2" for="username">Name:</label>
+				  <label class="control-label col-sm-2" for="name">Name:</label>
 				  <div class="col-sm-10">
-					<input data-bind="value: newSpouseUsername" class="form-control"
-                           autofocus="" id="username"/>
+					<input data-bind="value: newSpouseName" class="form-control"
+                           autofocus="" id="name"/>
 				  </div>
 				</div>
 			  </div>
@@ -257,7 +257,7 @@
        data-bind="dismissModal: okToClose, attr: {id: 'confirmDelete-' + uuid()}">
     <div class="modal-dialog modal-sm">
       <div class="modal-content">
-        <div class="modal-body" data-bind="text: 'Delete ' + username() + '?'"></div>
+        <div class="modal-body" data-bind="text: 'Delete ' + name() + '?'"></div>
         
         <div class="modal-footer">
           <form role="form" data-bind="submit: deletePerson">

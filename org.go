@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -14,9 +13,9 @@ type Org struct {
 
 type Orgs []Org
 
-func GetOrgs() (Orgs, error) {
+func GetOrgs(username string) (Orgs, error) {
 	orgs := Orgs{}
-	dirs, err := ioutil.ReadDir(DATA_DIR)
+	dirs, err := ioutil.ReadDir(DATA_DIR + "/" + username)
 	if err != nil {
 		return orgs, errors.Wrap(err, "Failed to read data dir:")
 	}
@@ -30,12 +29,11 @@ func GetOrgs() (Orgs, error) {
 	return orgs, nil
 }
 
-func SaveOrg(name string) error {
-	dir := fmt.Sprintf("%s/%s", DATA_DIR, name)
+func SaveOrg(username, name string) error {
+	dir := getFamilyDir(username, name)
 	err := os.MkdirAll(dir, 0777)
 	if err != nil {
-		return errors.Wrap(err, "Failed to make org dir")
+		return errors.Wrap(err, "Failed to create org dir")
 	}
-
 	return nil
 }

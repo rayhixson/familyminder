@@ -4,9 +4,7 @@ define(function (require) {
         ApiClient = require("api-client");
 
     var EDIT_MODE_KEY = "fm_edit_mode";
-    var ADMIN_NAME_KEY = "fm_admin_name";
-    var ADMIN_PASS_KEY = "fm_admin_pass";
-    var APP_NAME_KEY = "fm_app_name";
+    var ORG_NAME_KEY = "fm_org_name";
     var HOST_KEY = "fm_host";
 
         
@@ -25,16 +23,14 @@ define(function (require) {
         
         self.apiHost = ko.observable(self.get(HOST_KEY, pub));
         
-        self.homeUrl = ko.observable(location.origin + location.pathname);
+        self.homeUrl = ko.observable(location.origin);
 
-	    //self.minderAdminName = ko.observable(self.get(ADMIN_NAME_KEY, "test"));
-	    //self.minderAdminPassword = ko.observable(self.get(ADMIN_PASS_KEY, "test"));
-	    self.minderAdminName = ko.observable(self.get(ADMIN_NAME_KEY, "bob"));
-	    self.minderAdminPassword = ko.observable(self.get(ADMIN_PASS_KEY, "foobar"));
+	    self.minderAdminName = ko.observable("admin-name")
+	    self.minderAdminPassword = ko.observable("admin-pass")
         
-	    self.familyName = ko.observable(self.get(APP_NAME_KEY, "Blork"));
-	    self.familyAdminName = ko.observable("Bob");
-	    self.familyAdminPassword = ko.observable("foobar");
+	    self.orgName = ko.observable();
+	    self.userName = ko.observable();
+	    self.password = ko.observable();
 
         self.showErrorAlert = ko.observable(false);
         self.errorMessage = ko.observable();
@@ -69,23 +65,24 @@ define(function (require) {
 
         self.logout = function() {
             if (self.userLoggedIn()) {
-                self.client.logout(self.familyAdminName(), function(err, resp) {
+                self.client.logout(self.userName(), function(err, resp) {
                     if (err) {
                         console.log("Failed to Logout: " + err);
                     }
                 });
 		        self.userLoggedIn(false);
+				self.orgName("")
                 views.LOGIN.setCurrent();
             }
         };
 
         self.setClientFromToken = function() {
             // try to bootstrap from localstorage
-            var api = new ApiClient(self.apiHost(), self.familyName(), false);
+            var api = new ApiClient(self);
 
             if (api.isLoggedIn()) {
                 self.client = api;
-                self.familyName(self.client.appName);
+                self.orgName(self.get(ORG_NAME_KEY, null))
             }
         };
 
@@ -93,22 +90,30 @@ define(function (require) {
             localStorage.setItem(key, arg);
         };
 
+		self.saveOrgName = function(name) {
+            self.set(ORG_NAME_KEY, name);
+			self.orgName(name);
+		};			
+
+		/*
         self.saveConfigs = function() {
-            self.set(ADMIN_NAME_KEY, self.minderAdminName());
-            self.set(ADMIN_PASS_KEY, self.minderAdminPassword());
-            self.set(APP_NAME_KEY, self.familyName());
+            self.set(ORG_NAME_KEY, self.familyName());
             self.set(HOST_KEY, self.apiHost());
         };
+		*/
 
 	    // --   INITIALIZE 
         
         // when a user comes to the site and is already logged in
         self.setClientFromToken();
         if (self.client) {
-            self.userLoggedIn(true);
-            views.TREE.setCurrent();
+			self.userLoggedIn(true);
+			if (self.orgName) {
+				views.TREE.setCurrent();
+			} else {
+				views.ADMIN.setCurrent();
+			}
         }
-
     };
 
     // create and return one instance to be shared.

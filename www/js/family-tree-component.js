@@ -6,7 +6,7 @@ define(function (require) {
         $ = require('jquery');
 
     function personFromEntity(entity, parent) {
-	    var p = new Person(entity.uuid, entity.username, entity.birthday,
+	    var p = new Person(entity.uuid, entity.name, entity.birthday,
 			               entity.email, entity.picture, entity.picture2, entity.is_spouse);
 
 	    if (entity.child_ids) {
@@ -24,7 +24,7 @@ define(function (require) {
     function Person(uuid, name, bday, email, img, img2, isSpouse) {
 	    var self = this;
         self.uuid = ko.observable(uuid);
-        self.username = ko.observable(name);
+        self.name = ko.observable(name);
         self.bday = ko.observable(bday);
         self.email = ko.observable(email);
         self.image = ko.observable(img ? img : 'images/default.jpg');
@@ -77,9 +77,9 @@ define(function (require) {
         self.kids = ko.observableArray([]);
 
         // --- use this attribute when creating a new spouse of this person ---
-        self.newSpouseUsername = ko.observable();
+        self.newSpouseName = ko.observable();
         // --- use this attribute when creating a new child of this person ---
-        self.newChildUsername = ko.observable();
+        self.newChildName = ko.observable();
 
         // NON-OBSERVABLE
 
@@ -115,13 +115,13 @@ define(function (require) {
                 });
         };
 
-        self.createPerson = function(newUsername, callback) {
+        self.createPerson = function(newName, callback) {
 
             var options = {
                 method: 'POST',
-                endpoint: 'users',
+                endpoint: 'persons',
                 body: {
-                    'username': newUsername
+                    'name': newName
                 }
             };
 
@@ -134,10 +134,10 @@ define(function (require) {
                     callback(person);
 
                     // does the server already have images?
-                    person.defineImage(newUsername, function(imageName) {
+                    person.defineImage(newName, function(imageName) {
                         person.image(imageName);
 
-                        person.defineImage(newUsername+"2", function(imageName) {
+                        person.defineImage(newName+"2", function(imageName) {
                             person.image2(imageName);
 
                             person.savePerson();
@@ -150,9 +150,9 @@ define(function (require) {
 	    self.savePerson = function() {
    	        var options = {
                 method: 'PUT',
-                endpoint: 'users/' + self.uuid(),
+                endpoint: 'persons/' + self.uuid(),
                 body: {
-                    'username': self.username(),
+                    'name': self.name(),
                     'picture': self.image(),
                     'picture2': self.image2(),
                     'birthday': self.bday(),
@@ -172,7 +172,7 @@ define(function (require) {
 	    self.deletePerson = function() {
             var options = {
                 method: 'DELETE',
-                endpoint: 'users/' + self.uuid()
+                endpoint: 'persons/' + self.uuid()
             };
 
             context.client.request(options, function(err, data) {
@@ -190,15 +190,15 @@ define(function (require) {
             // reset any previous error dialog
             context.stopShowErrorAlert();
 
-            self.createPerson(self.newSpouseUsername(), function(person) {
+            self.createPerson(self.newSpouseName(), function(person) {
 			    self.spouse(person);
                 person.isSpouse(true);
-			    self.newSpouseUsername(null);
+			    self.newSpouseName(null);
 
                 // then relate it to this parent
                 var options = {
                     method: 'POST',
-                    endpoint: 'users/' + self.uuid() + '/spouse/' + person.uuid()
+                    endpoint: 'persons/' + self.uuid() + '/spouse/' + person.uuid()
                     // data: null
                 };
 
@@ -216,15 +216,15 @@ define(function (require) {
             // reset any previous error dialog
             context.stopShowErrorAlert();
 
-            self.createPerson(self.newChildUsername(), function(person) {
+            self.createPerson(self.newChildName(), function(person) {
 			    self.kids.push(person);
                 person.parent(self);
-			    self.newChildUsername(null);
+			    self.newChildName(null);
 
                 // then relate it to this parent
                 var options = {
                     method: 'POST',
-                    endpoint: 'users/' + self.uuid() + '/children/' + person.uuid()
+                    endpoint: 'persons/' + self.uuid() + '/children/' + person.uuid()
                     // data: null
                 };
 
@@ -242,7 +242,7 @@ define(function (require) {
     function FamilyTreeViewModel() {
         var self = this;
 
-        self.dadsName = context.familyAdminName();
+        self.dadsName = "Dad";
 
 	    self.people = ko.observableArray([]);
 	    self.peopleNames = ko.observableArray([]);
@@ -258,7 +258,7 @@ define(function (require) {
 	    self.getDad = function() {
             var options = {
                 method: "GET",
-                endpoint: "users/" +self.dadsName
+                endpoint: "persons/" +self.dadsName
             };
 
             context.client.request(options, function(err, d) {
@@ -283,7 +283,7 @@ define(function (require) {
 				for (var i=0; i < len; i++) {
 					var options = {
 						method: "GET",
-						endpoint: "users/" + parent.kidsLink()[i]
+						endpoint: "persons/" + parent.kidsLink()[i]
 					};
 
 					context.client.request(options, function(err, kdata) {
@@ -302,7 +302,7 @@ define(function (require) {
 	        if (parent.spouseLink().length > 0) {
                 options = {
                     method: "GET",
-                    endpoint: "users/" + parent.spouseLink()
+                    endpoint: "persons/" + parent.spouseLink()
                 };
 
                 context.client.request(options, function(err, kdata) {
@@ -320,7 +320,7 @@ define(function (require) {
 	    self.getAllPeople = function() {
             var options = {
                 method: "GET",
-                type: "users"
+                type: "persons"
             };
 
             context.client.request(options, function(err, resp) {

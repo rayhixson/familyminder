@@ -7,19 +7,16 @@ define(function(require) {
     /*
      * 
      */
-    var ApiClient = function(apiHost, appName, isAdminClient) {
-        this.isAdminClient = isAdminClient;
-        
-        this.apiHost = apiHost;
-        this.appName = appName;
+    var ApiClient = function(context) {
+		this.context = context;
 
-        this.tokenKey = isAdminClient ? "fm_admin_token" : "fm_family_token";
+        this.tokenKey = "fm_token";
 
         this.token = localStorage.getItem(this.tokenKey);
     };
 
     ApiClient.prototype._buildUrl = function() {
-        return this.apiHost + '/orgminder/' + this.appName;
+        return this.context.apiHost() + '/orgminder/' + this.context.orgName();
     };
 
     ApiClient.prototype.isLoggedIn = function() {
@@ -30,12 +27,8 @@ define(function(require) {
      * Auth a user and set the token in local storage for future calls
      */
     ApiClient.prototype.login = function(username, password, callback) {
-        var url = this._buildUrl() + "/token";
+        var url = this.context.apiHost() + "/admin/token";
         
-        if (this.isAdminClient) {
-            url = this.apiHost + "/management/token";
-        }
-
         // don't reuse the old token if there is one
         this.token = null;
         
@@ -56,6 +49,26 @@ define(function(require) {
             callback(err, response);
         });
     };
+
+	ApiClient.prototype.getOrgs = function(callback) {
+		var url = this.context.apiHost() + "/admin/orgs"
+
+        this._http(url, "GET", null, function(err, response) {
+			callback(err, response);
+        });
+	};
+
+	ApiClient.prototype.createOrg = function(orgName, callback) {
+		var url = this.context.apiHost() + "/admin/orgs"
+
+		var data = {
+			name: orgName,
+        };
+
+        this._http(url, "POST", data, function(err, response) {
+			callback(err, response);
+        });
+	};
 
     ApiClient.prototype.logout = function(username, callback) {
         localStorage.removeItem(this.tokenKey);
@@ -81,11 +94,6 @@ define(function(require) {
 
 		console.log("--===--> " + options.endpoint)
 
-        // admin type request?
-        if (options.endpoint.toString().startsWith("management")) {
-            uri = this.apiHost;
-        }
-        
         if (!options.endpoint.toString().startsWith('/')) {
             uri += '/';
         }

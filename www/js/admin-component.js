@@ -19,98 +19,59 @@ define(function (require) {
         self.createFamily = function() {
             context.resetAlerts();
             
-            if (!context.familyName() || context.familyName().length < 2) {
+            if (!context.orgName() || context.orgName().length < 2) {
                 context.handleError("Missing or bad family name (at least 2 characters long)");
             } else {
 
-                console.log("--> Get an admin token ...");
-                self.client.login(context.minderAdminName(), context.minderAdminPassword(), function(err, response) {
+				self.client.createOrg(context.orgName(), function(err, resdata) {
                     if (err) {
-                        context.handleError(err);
+                        context.handleError("Create Org: " + err);
                     } else {
-                        var options = {
-                            method:'POST',
-                            endpoint: 'management/orgs/',
+                        // now that the app exists, tell the client object
+                        context.saveOrgName(context.orgName());
+                        
+                        // CREATE THE DAD for the Family / org
+                        var data = {
+                            endpoint: "persons",
+                            method: "POST",
                             body: {
-                                name: context.familyName()
+                                email: 'ray@zenfoo.com',
+                                name: 'Dad',
+                                image: 'images/default.jpg'
                             }
                         };
 
-                        // CREATE THE APP
-                        console.log("--> Make request to create an app");
-                        
-                        self.client.request(options, function(err2, resdata) {
-                            if (err2) {
-                                context.handleError("Create App: " + err2);
-                            } else {
-                                // now that the app exists, tell the client object
-                                self.client.appName = context.familyName();
+                        console.log("--> create dad for family");
                                 
-                                // CREATE THE ADMIN USER FOR THE APP
-                                var data = {
-                                    endpoint: "users",
-                                    method: "POST",
-                                    body: {
-                                        username: context.familyAdminName(),
-                                        password: context.familyAdminPassword(),
-                                        email: 'ray@zenfoo.com',
-                                        name: context.familyAdminName(),
-                                        image: 'images/default.jpg'
-                                    }
-                                };
-
-                                console.log("--> create admin for family");
-                                
-                                self.client.request(data, function(err3, res3) {
-                                    if (err3) {
-                                        context.handleError("Create admin for app: "
-                                                            + err3);
-                                    }
-                                    // success, send to login page
-                                    views.LOGIN.setCurrent();
-                                });
+                        self.client.request(data, function(err3, res3) {
+                            if (err3) {
+                                context.handleError("Create dad for family: " + err3);
                             }
                         });
+
+						// add to the list of orgs
+                        self.apiApplications.push(new ApiApp(context.orgName()));
                     }
                 });
-            }
-        };
-
-        self.save = function() {
-            context.saveConfigs();
-            self.initApplications();
-        };
+			}
+		};
 
         self.initApplications = function() {
-            self.client = new ApiClient(context.apiHost(),
-                                        context.familyName(),
-                                        true);
+            self.client = new ApiClient(context)
                 
             self.apiApplications.removeAll();
-            
-            console.log("--> Get an admin token for admin: " + context.minderAdminName());
-            self.client.login(context.minderAdminName(), context.minderAdminPassword(), function(err, response) {
-                if (err) {
-                    context.handleError(err);
-                } else {
-                    var options = {
-                        method: "GET",
-                        endpoint: "management/orgs"
-                    };
 
-                    self.client.request(options, function(err, data) {
-                        if (err) {
-                            context.handleError("Failed to retrieve existing Organizations: " + err);
-                        } else {
-                            //fill the array
-							for (var i=0; i < data.length; i++) {
-                                var appName = data[i].name.toUpperCase();
-                                self.apiApplications.push(new ApiApp(appName));
-                            }
-                        }
-                    });
+			self.client.getOrgs(function(err, response) {
+                if (err) {
+                    context.handleError("Failed to retrieve existing Organizations: " + err);
+                } else {
+                    //fill the array
+					for (var i=0; i < response.length; i++) {
+                        var appName = response[i].name.toUpperCase();
+                        self.apiApplications.push(new ApiApp(appName));
+                    }
                 }
-            });
+			});
         };
 
         // actually do the initialization
@@ -124,9 +85,9 @@ define(function (require) {
         
         // Behaviours
 
-        self.goToLogin = function() {
-            context.familyName(self.name());
-            views.LOGIN.setCurrent();
+        self.goToTree = function() {
+            context.saveOrgName(self.name());
+            views.TREE.setCurrent();
         };
     };
 
