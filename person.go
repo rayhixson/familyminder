@@ -208,5 +208,5 @@ func isSpouse(uuid string, members []*Person) bool {
 }
 
 func getFamilyDir(userDir, family string) string {
-	return fmt.Sprintf("%s/%s/%s", DATA_DIR, userDir, strings.ToLower(family))
+	return fmt.Sprintf("%s/%s/%s", DATA_DIR, userDir, family)
 }
