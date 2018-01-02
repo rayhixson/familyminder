@@ -30,20 +30,14 @@ define(function (require) {
                         // now that the app exists, tell the client object
                         context.saveOrgName(context.orgName());
                         
-                        // CREATE THE DAD for the Family / org
+                        console.log("--> create dad for family");
                         var data = {
-                            endpoint: "persons",
-                            method: "POST",
-                            body: {
-                                email: 'ray@zenfoo.com',
-                                name: 'Dad',
-                                image: 'images/default.jpg'
-                            }
+                            email: 'ray@zenfoo.com',
+                            name: 'Dad',
+                            image: 'images/default.jpg'
                         };
 
-                        console.log("--> create dad for family");
-                                
-                        self.client.request(data, function(err3, res3) {
+                        self.client.createPerson(data, function(err3, res3) {
                             if (err3) {
                                 context.handleError("Create dad for family: " + err3);
                             }
@@ -67,8 +61,7 @@ define(function (require) {
                 } else {
                     //fill the array
 					for (var i=0; i < response.length; i++) {
-                        var appName = response[i].name.toUpperCase();
-                        self.apiApplications.push(new ApiApp(appName));
+                        self.apiApplications.push(new ApiApp(response[i].name));
                     }
                 }
 			});

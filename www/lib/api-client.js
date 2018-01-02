@@ -73,34 +73,44 @@ define(function(require) {
     ApiClient.prototype.logout = function(username, callback) {
         localStorage.removeItem(this.tokenKey);
         
-        var url = this._buildUrl() + "/users/" + username + "/revoketokens";
+        var url = this._buildUrl() + "/persons/" + username + "/revoketokens";
 
         this._http(url, "PUT", null, callback);
     };
 
-    /*
-     * Expections options like this:
-     * {
-     *   endpoint : "users",
-     *   method : "POST",
-     *   body {
-     *     username: "bob"
-     *   }
-     * }
-     *
-     */
-    ApiClient.prototype.request = function(options, callback) {
-        var uri = this._buildUrl();
+	ApiClient.prototype.createPerson = function(person, callback) {
+		var uri = this._buildUrl() + "/persons"
+        this._http(uri, "POST", person, callback);
+	}
 
-		console.log("--===--> " + options.endpoint)
+	ApiClient.prototype.savePerson = function(person, callback) {
+		var uri = this._buildUrl() + "/persons/" + person.uuid
+        this._http(uri, "PUT", person, callback);
+	}
 
-        if (!options.endpoint.toString().startsWith('/')) {
-            uri += '/';
-        }
-        uri += options.endpoint;
+	ApiClient.prototype.deletePerson = function(uuid, callback) {
+		var uri = this._buildUrl() + "/persons/" + person.uuid
+        this._http(uri, "DELETE", null, callback);
+	}
 
-        this._http(uri, options.method, options.body, callback);
-    };
+	ApiClient.prototype.addSpouse = function(personId, spouseId, callback) {
+		var uri = this._buildUrl() + "/persons/" + personId + "/spouse/" + spouseId
+        this._http(uri, "POST", null, callback);
+	}
+
+	ApiClient.prototype.addKid = function(parentId, kidId, callback) {
+		var uri = this._buildUrl() + "/persons/" + parentId + "/children/" + kidId
+        this._http(uri, "POST", null, callback);
+	}
+
+	ApiClient.prototype.getPerson = function(uuid, callback) {
+		var uri = this._buildUrl() + "/persons/" + uuid
+        this._http(uri, "GET", null, callback);
+	}
+
+	ApiClient.prototype.getDad = function(callback) {
+		return this.getPerson("dad", callback)
+	}
 
     ApiClient.prototype._http = function(uri, method, data, callback) {
 	    var headers = null;

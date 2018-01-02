@@ -117,16 +117,12 @@ define(function (require) {
 
         self.createPerson = function(newName, callback) {
 
-            var options = {
-                method: 'POST',
-                endpoint: 'persons',
-                body: {
-                    'name': newName
-                }
+            var data = {
+                'name': newName
             };
 
             var person;
-            context.client.request(options, function(err, data) {
+            context.client.createPerson(data, function(err, data) {
                 if (err) {
                     context.handleError(err);
                 } else {
@@ -148,19 +144,16 @@ define(function (require) {
         };
 
 	    self.savePerson = function() {
-   	        var options = {
-                method: 'PUT',
-                endpoint: 'persons/' + self.uuid(),
-                body: {
-                    'name': self.name(),
-                    'picture': self.image(),
-                    'picture2': self.image2(),
-                    'birthday': self.bday(),
-       	            'email': self.email()
-                }
+   	        var data = {
+				'uuid': self.uuid(),
+                'name': self.name(),
+                'picture': self.image(),
+                'picture2': self.image2(),
+                'birthday': self.bday(),
+       	        'email': self.email()
             };
 
-            context.client.request(options, function(err, data) {
+            context.client.savePerson(data, function(err, data) {
                 if (err) {
                     context.handleError(err);
                 } else {
@@ -170,12 +163,7 @@ define(function (require) {
 	    };
 
 	    self.deletePerson = function() {
-            var options = {
-                method: 'DELETE',
-                endpoint: 'persons/' + self.uuid()
-            };
-
-            context.client.request(options, function(err, data) {
+            context.client.deletePerson(self.uuid(), function(err, data) {
                 if (err) {
                     context.handleError(err);
                 } else {
@@ -196,13 +184,7 @@ define(function (require) {
 			    self.newSpouseName(null);
 
                 // then relate it to this parent
-                var options = {
-                    method: 'POST',
-                    endpoint: 'persons/' + self.uuid() + '/spouse/' + person.uuid()
-                    // data: null
-                };
-
-                context.client.request(options, function(err, data) {
+                context.client.makeSpouse(self.uuid(), person.uuid(), function(err, data) {
                     if (err) {
                         context.handleError(err);
                     } else {
@@ -222,13 +204,7 @@ define(function (require) {
 			    self.newChildName(null);
 
                 // then relate it to this parent
-                var options = {
-                    method: 'POST',
-                    endpoint: 'persons/' + self.uuid() + '/children/' + person.uuid()
-                    // data: null
-                };
-
-                context.client.request(options, function(err, data) {
+                context.client.addKid(self.uuid(), person.uuid(), function(err, data) {
                     if (err) {
                         self.handleError(err);
                     } else {
@@ -242,8 +218,6 @@ define(function (require) {
     function FamilyTreeViewModel() {
         var self = this;
 
-        self.dadsName = "Dad";
-
 	    self.people = ko.observableArray([]);
 	    self.peopleNames = ko.observableArray([]);
 
@@ -256,12 +230,7 @@ define(function (require) {
         //	Functions
 
 	    self.getDad = function() {
-            var options = {
-                method: "GET",
-                endpoint: "persons/" +self.dadsName
-            };
-
-            context.client.request(options, function(err, d) {
+            context.client.getDad(function(err, d) {
                 if (err) {
                     context.handleError(err);
                 } else {
@@ -281,12 +250,7 @@ define(function (require) {
 
 				var len = parent.kidsLink().length;
 				for (var i=0; i < len; i++) {
-					var options = {
-						method: "GET",
-						endpoint: "persons/" + parent.kidsLink()[i]
-					};
-
-					context.client.request(options, function(err, kdata) {
+					context.client.getPerson(parent.kidsLink()[i], function(err, kdata) {
 						if (err) {
 							context.handleError(err);
 						} else {
@@ -300,12 +264,7 @@ define(function (require) {
 	        }
 
 	        if (parent.spouseLink().length > 0) {
-                options = {
-                    method: "GET",
-                    endpoint: "persons/" + parent.spouseLink()
-                };
-
-                context.client.request(options, function(err, kdata) {
+                context.client.getPerson(parent.spouseLink(), function(err, kdata) {
                     if (err) {
                         context.handleError(err);
                     } else {
@@ -316,24 +275,6 @@ define(function (require) {
 		        });
 	        }
         };
-
-	    self.getAllPeople = function() {
-            var options = {
-                method: "GET",
-                type: "persons"
-            };
-
-            context.client.request(options, function(err, resp) {
-                var ps = [];
-			    for (var i=0; i < resp.entities.length; i++) {
-				    var p = personFromEntity(resp.entities[i], null);
-				    ps.push(p);
-				    self.derefRelations(p);
-			    }
-
-			    self.updatePeopleNames();
-		    });
-	    };
 
         /*
          * This method traverses the family tree handling things that need to be
