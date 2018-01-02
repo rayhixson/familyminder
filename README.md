@@ -47,3 +47,10 @@ The following is a high level description of the code but it is assumed that you
 ### <a href="www/lib/api-client.js">www/lib/api-client.js</a>
 * Simple client to the webserver API.
 
+---
+### Users
+Password authentication is not yet implemented but to add a user to the system:
+* `make new user=bob password=foo`
+
+
+
