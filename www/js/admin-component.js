@@ -3,7 +3,7 @@ define(function (require) {
         context = require('js/context'),
         html = require('text!html/admin-component.html'),
         views = require('js/views'),
-        UsergridClient = require('usergrid-utilities');
+        ApiClient = require('api-client');
 
     function AdminViewModel() {
         var self = this;
@@ -11,107 +11,60 @@ define(function (require) {
         // bind this to observable to get data from context in html
         self.context = ko.observable(context);
 
-        self.ugApplications = ko.observableArray([]);
+        self.apiApplications = ko.observableArray([]);
 
-        self.ugClient = null;
+        self.client = null;
 
         // Behaviors
         self.createFamily = function() {
             context.resetAlerts();
             
-            if (!context.familyName() || context.familyName().length < 2) {
+            if (!context.orgName() || context.orgName().length < 2) {
                 context.handleError("Missing or bad family name (at least 2 characters long)");
             } else {
 
-                console.log("--> Get an admin token ...");
-                self.ugClient.login(context.minderAdminName(), context.minderAdminPassword(), function(err, response) {
+				self.client.createOrg(context.orgName(), function(err, resdata) {
                     if (err) {
-                        context.handleError(err);
+                        context.handleError("Create Org: " + err);
                     } else {
-                        var options = {
-                            method:'POST',
-                            endpoint: 'management/orgs/',
-                            body: {
-                                name: context.familyName()
-                            }
+                        // now that the app exists, tell the client object
+                        context.saveOrgName(context.orgName());
+                        
+                        console.log("--> create dad for family");
+                        var data = {
+                            email: 'ray@zenfoo.com',
+                            name: 'Dad',
+                            image: 'images/default.jpg'
                         };
 
-                        // CREATE THE APP
-                        console.log("--> Make request to create an app");
-                        
-                        self.ugClient.request(options, function(err2, resdata) {
-                            if (err2) {
-                                context.handleError("Create App: " + err2);
-                            } else {
-                                // now that the app exists, tell the client object
-                                self.ugClient.appName = context.familyName();
-                                
-                                // CREATE THE ADMIN USER FOR THE APP
-                                var data = {
-                                    endpoint: "users",
-                                    method: "POST",
-                                    body: {
-                                        username: context.familyAdminName(),
-                                        password: context.familyAdminPassword(),
-                                        email: 'ray@zenfoo.com',
-                                        name: context.familyAdminName(),
-                                        image: 'images/default.jpg'
-                                    }
-                                };
-
-                                console.log("--> create admin for family");
-                                
-                                self.ugClient.request(data, function(err3, res3) {
-                                    if (err3) {
-                                        context.handleError("Create admin for app: "
-                                                            + err3);
-                                    }
-                                    // success, send to login page
-                                    views.LOGIN.setCurrent();
-                                });
+                        self.client.createPerson(data, function(err3, res3) {
+                            if (err3) {
+                                context.handleError("Create dad for family: " + err3);
                             }
                         });
+
+						// add to the list of orgs
+                        self.apiApplications.push(new ApiApp(context.orgName()));
                     }
                 });
-            }
-        };
-
-        self.save = function() {
-            context.saveConfigs();
-            self.initApplications();
-        };
+			}
+		};
 
         self.initApplications = function() {
-            self.ugClient = new UsergridClient(context.ugHost(),
-                                               context.ugOrganization(),
-                                               context.familyName(),
-                                               true);
+            self.client = new ApiClient(context)
                 
-            self.ugApplications.removeAll();
-            
-            console.log("--> Get an admin token for admin: " + context.minderAdminName());
-            self.ugClient.login(context.minderAdminName(), context.minderAdminPassword(), function(err, response) {
-                if (err) {
-                    context.handleError(err);
-                } else {
-                    var options = {
-                        method: "GET",
-                        endpoint: "management/orgs"
-                    };
+            self.apiApplications.removeAll();
 
-                    self.ugClient.request(options, function(err, data) {
-                        if (err) {
-                            context.handleError("Failed to retrieve existing Organizations: " + err);
-                        } else {
-                            //fill the array
-							for (var i=0; i < data.length; i++) {
-                                var appName = data[i].name.toUpperCase();
-                                self.ugApplications.push(new UgApp(appName));
-                            }
-                        }
-                    });
+			self.client.getOrgs(function(err, response) {
+                if (err) {
+                    context.handleError("Failed to retrieve existing Organizations: " + err);
+                } else {
+                    //fill the array
+					for (var i=0; i < response.length; i++) {
+                        self.apiApplications.push(new ApiApp(response[i].name));
+                    }
                 }
-            });
+			});
         };
 
         // actually do the initialization
@@ -119,15 +72,15 @@ define(function (require) {
     };
 
     // Represents one app / family - for listing them all
-    function UgApp(name) {
+    function ApiApp(name) {
         var self = this;
         self.name = ko.observable(name);
         
         // Behaviours
 
-        self.goToLogin = function() {
-            context.familyName(self.name());
-            views.LOGIN.setCurrent();
+        self.goToTree = function() {
+            context.saveOrgName(self.name());
+            views.TREE.setCurrent();
         };
     };
 

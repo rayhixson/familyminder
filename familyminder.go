@@ -10,278 +10,277 @@ import (
 	"regexp"
 	"runtime/debug"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 const serveDir = "www"
 const index = "index.html"
 const PORT = ":9090"
+const ACCESS_TOKEN = "access_token"
 
 const DUMP_REQUESTS = false
 
-//var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
+type Login struct {
+	Username  string `json:"username"`
+	Password  string `json:"password"`
+	GrantType string `json:"grant_type"`
+	Token     string `json:"access_token"`
+}
 
-var tokenPath = regexp.MustCompile("^/orgminder/(.*)/token$")
-var userPath = regexp.MustCompile("^/orgminder/(.*)/users(/.*)?")
-var childPath = regexp.MustCompile("^/orgminder/(.*)/users(/.*)/children(/.*)?$")
+// /orgminder/{familyname}/persons/{person_id}
+var userPath = regexp.MustCompile("^/orgminder/(.*)/persons(/.*)?")
+
+// /orgminder/{familyname}/persons/{person_id}/children/{child_id}
+var childPath = regexp.MustCompile("^/orgminder/(.*)/persons(/.*)/children(/.*)?$")
 
 func fileHandler(w http.ResponseWriter, r *http.Request) {
 	//log.Printf("Serve: %v", r.URL.Path)
 	http.ServeFile(w, r, serveDir+r.URL.Path)
 }
 
-func mgmtHandler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("-------------- %v: %v", r.Method, r.URL.Path)
+func readBody(w http.ResponseWriter, r *http.Request) (bytes.Buffer, error) {
+	if r.URL.RawQuery == "" {
+		log.Printf("-------------- %v: %v", r.Method, r.URL.Path)
+	} else {
+		log.Printf("-------------- %v: %v?%v", r.Method, r.URL.Path, r.URL.RawQuery)
+	}
 	var buf bytes.Buffer
-	if _, err := buf.ReadFrom(r.Body); err != nil {
-		log.Printf("Failed to read: %v", err)
-		return
-	}
-	if err := r.Body.Close(); err != nil {
-		log.Printf("Failed to close: %v", err)
-	}
-
-	parts := strings.Split(r.URL.Path, "/")
-	action := parts[2]
-
-	switch action {
-	case "token":
-		login := Login{}
-		err := json.Unmarshal(buf.Bytes(), &login)
-		if err != nil {
-			handleErr(w, err)
-			return
-		}
-
-		// this is where the admin logs in - just let it go
-		log.Printf("Allowing management login indiscriminately")
-		okResponse(w, &login)
-	case "orgs":
-		orgs, err := GetOrgs()
-		log.Printf("Orgs: %v", orgs)
-		if err != nil {
-			handleErr(w, err)
-		} else {
-			okResponse(w, orgs)
-		}
-	default:
-		log.Printf("mgmtHandler - unknown action: %v", action)
-	}
-}
-
-func apiHandler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("-------------- %v: %v", r.Method, r.URL.Path)
 	if DUMP_REQUESTS {
 		bytes, err := httputil.DumpRequest(r, true)
 		if err != nil {
-			log.Printf("Failed to Dump: %v", err)
-			return
+			return buf, errors.Wrap(err, "Failed to Dump")
 		}
 		log.Printf("Request: %v", string(bytes))
+
 	}
 
-	parts := strings.Split(r.URL.Path, "/")
-	family := parts[2]
-	action := parts[3]
-
-	// identify the verb after the user id
-	if action == "users" && len(parts) >= 6 {
-		action = parts[5]
-	}
-
-	log.Printf("Family: %v, Action: %v", family, action)
-
-	var buf bytes.Buffer
 	if _, err := buf.ReadFrom(r.Body); err != nil {
-		log.Printf("Failed to read: %v", err)
-		return
+		return buf, errors.Wrap(err, "Failed to read")
 	}
 	if err := r.Body.Close(); err != nil {
-		log.Printf("Failed to close: %v", err)
+		return buf, errors.Wrap(err, "Failed to close")
 	}
 
 	if r.Method == "POST" || r.Method == "PUT" {
 		log.Printf("Body: %v", buf.String())
 	}
 
-	switch action {
-	case "token":
-		tokenHandler(w, family, buf.Bytes())
-	case "users":
-		switch r.Method {
-		case "GET":
-			getUsersHandler(w, family, parts[4])
-		case "PUT":
-			saveUserHandler(w, family, parts[4], buf.Bytes())
-		case "POST":
-			createNewUserHandler(w, family, buf.Bytes())
-		case "DELETE":
-			deleteUserHandler(w, family, parts[4])
-		default:
-			log.Printf("Unknown [users] method: %v\n", r.Method)
+	return buf, nil
+}
+
+func apiHandler(w http.ResponseWriter, r *http.Request) {
+	responseObject, err := func() (interface{}, error) {
+		buf, err := readBody(w, r)
+		if err != nil {
+			return nil, err
 		}
-	case "revoketokens":
-		userID := parts[4]
-		switch r.Method {
-		case "PUT":
-			logoutUserHandler(w, family, userID)
-		default:
-			log.Printf("Unknown [revoketokens] method: %v\n", r.Method)
+
+		user, err := auth(r.URL.Query().Get(ACCESS_TOKEN))
+		if err != nil {
+			return nil, err
 		}
-	case "children":
-		userID := parts[4]
-		switch r.Method {
-		case "POST":
-			addChildHandler(w, family, userID, parts[6])
-		default:
-			log.Printf("Unknown [children] method: %v\n", r.Method)
+
+		parts := strings.Split(r.URL.Path, "/")
+		family := parts[2]
+		action := parts[3]
+
+		// identify the verb after the person id
+		if action == "persons" && len(parts) >= 6 {
+			action = parts[5]
 		}
-	case "spouse":
-		userID := parts[4]
-		switch r.Method {
-		case "POST":
-			addSpouseHandler(w, family, userID, parts[6])
+
+		log.Printf("Family: %v, Action: %v", family, action)
+
+		switch action {
+		case "persons":
+			switch r.Method {
+			case "GET":
+				return getPerson(user, family, parts[4])
+			case "PUT":
+				return nil, savePerson(user, family, parts[4], buf.Bytes())
+			case "POST":
+				return createNewPerson(user, family, buf.Bytes())
+			case "DELETE":
+				return nil, deletePerson(user, family, parts[4])
+			default:
+				return nil, fmt.Errorf("Unknown [persons] method: %v\n", r.Method)
+			}
+		case "children":
+			personID := parts[4]
+			switch r.Method {
+			case "POST":
+				return addChild(user, family, personID, parts[6])
+			default:
+				return nil, fmt.Errorf("Unknown [children] method: %v\n", r.Method)
+			}
+		case "spouse":
+			personID := parts[4]
+			switch r.Method {
+			case "POST":
+				return addSpouse(user, family, personID, parts[6])
+			default:
+				return nil, fmt.Errorf("Unknown [spouse] method: %v\n", r.Method)
+			}
 		default:
-			log.Printf("Unknown [spouse] method: %v\n", r.Method)
+			return nil, fmt.Errorf("Unknown action: %v", action)
 		}
-	default:
-		log.Printf("Unknown action: %v", action)
+	}()
+
+	if err != nil {
+		handleErr(w, err)
+	} else {
+		if responseObject == nil {
+			responseObject = ""
+		}
+		okResponse(w, responseObject)
 	}
 }
 
-func logoutUserHandler(w http.ResponseWriter, family, userID string) {
-	log.Printf("Logout: which is currently a noop")
-	okResponse(w, nil)
+func addSpouse(user, family, personID, spouseID string) (spouse *Person, err error) {
+	spouse, err = GetPerson(user, family, spouseID)
+	if err != nil {
+		return
+	}
+
+	person, err := GetPerson(user, family, personID)
+	if err != nil {
+		return
+	}
+
+	err = person.AddSpouse(spouse)
+	return
 }
 
-func addSpouseHandler(w http.ResponseWriter, family, userID, spouseID string) {
-	spouse, err := GetUser(family, spouseID)
+func deletePerson(user, family, personID string) error {
+	person, err := GetPerson(user, family, personID)
 	if err != nil {
-		handleErr(w, err)
-		return
+		return err
 	}
 
-	user, err := GetUser(family, userID)
-	if err != nil {
-		handleErr(w, err)
-		return
-	}
-
-	err = user.AddSpouse(spouse)
-	if err != nil {
-		handleErr(w, err)
-		return
-	}
-
-	okResponse(w, &spouse)
+	return person.Delete()
 }
 
-func deleteUserHandler(w http.ResponseWriter, family, userID string) {
-	user, err := GetUser(family, userID)
+func addChild(user, family, parentID, childID string) (parent *Person, err error) {
+	child, err := GetPerson(user, family, childID)
 	if err != nil {
-		handleErr(w, err)
 		return
 	}
 
-	err = user.Delete()
+	parent, err = GetPerson(user, family, parentID)
 	if err != nil {
-		handleErr(w, err)
-		return
-	}
-	okResponse(w, &user)
-}
-
-func addChildHandler(w http.ResponseWriter, family, parentID, childID string) {
-	child, err := GetUser(family, childID)
-	if err != nil {
-		handleErr(w, err)
-		return
-	}
-
-	parent, err := GetUser(family, parentID)
-	if err != nil {
-		handleErr(w, err)
 		return
 	}
 
 	err = parent.AddChild(child)
-	if err != nil {
-		handleErr(w, err)
-		return
-	}
 
-	okResponse(w, &parent)
+	return
 }
 
-func createNewUserHandler(w http.ResponseWriter, family string, buf []byte) {
-	u := User{}
-	err := json.Unmarshal(buf, &u)
+func createNewPerson(user, family string, buf []byte) (*Person, error) {
+	person := Person{}
+	err := json.Unmarshal(buf, &person)
 	if err != nil {
-		handleErr(w, err)
-		return
+		return &person, err
 	}
-	fmt.Printf("====> creating new user: %v for family %v\n", u.Username, family)
-	debug.PrintStack()
+	fmt.Printf("====> creating new person: %v for family %v\n", person.Name, family)
 
-	u.Uuid = NewID()
-	u.Familyname = family
-	err = u.Save()
-	if err != nil {
-		handleErr(w, err)
-	} else {
-		okResponse(w, &u)
-	}
+	person.Uuid = NewID()
+	person.Owner = user
+	person.Familyname = family
+	err = person.Save()
+
+	return &person, err
 }
 
-func saveUserHandler(w http.ResponseWriter, family string, who string, buf []byte) {
-	u := User{}
+func savePerson(user, family string, who string, buf []byte) error {
+	u := Person{}
 	err := json.Unmarshal(buf, &u)
 	if err != nil {
-		handleErr(w, err)
-		return
+		return err
 	}
 
+	u.Owner = user
 	u.Familyname = family
 	u.Uuid = who
 
-	err = u.Save()
-	if err != nil {
-		handleErr(w, err)
-	} else {
-		okResponse(w, nil)
-	}
+	return u.Save()
 }
 
-func getUsersHandler(w http.ResponseWriter, family string, who string) {
-	var u *User
-	var err error
+func getPerson(user, family string, who string) (person *Person, err error) {
 	if IsID(who) {
-		u, err = GetUser(family, who)
+		return GetPerson(user, family, who)
 	} else {
-		u, err = GetFamilyRoot(family)
-	}
-
-	if err != nil {
-		handleErr(w, err)
-	} else {
-		okResponse(w, &u)
+		return GetFamilyRoot(user, family)
 	}
 }
 
-func tokenHandler(w http.ResponseWriter, family string, buf []byte) {
-	login := Login{}
-	err := json.Unmarshal(buf, &login)
-	if err != nil {
-		handleErr(w, err)
-		return
-	}
+func adminHandler(w http.ResponseWriter, r *http.Request) {
+	responseObject, err := func() (interface{}, error) {
+		buf, err := readBody(w, r)
+		if err != nil {
+			return nil, err
+		}
 
-	log.Printf("tokenHandler: Family: %v, body: %+v", family, login)
+		parts := strings.Split(r.URL.Path, "/")
+		action := parts[2]
+
+		switch action {
+		case "token":
+			login := Login{}
+			err = json.Unmarshal(buf.Bytes(), &login)
+			if err != nil {
+				return nil, err
+			}
+
+			log.Printf("tokenHandler body: %+v", login)
+
+			token, err := auth(login.Username)
+			login.Token = token
+			return &login, err
+
+		case "orgs":
+			user, err := auth(r.URL.Query().Get(ACCESS_TOKEN))
+			if err != nil {
+				return nil, err
+			}
+
+			switch r.Method {
+			case "GET":
+				orgs, err := GetOrgs(user)
+				log.Printf("Orgs: %v", orgs)
+
+				return orgs, err
+
+			case "POST":
+				org := Org{}
+				err = json.Unmarshal(buf.Bytes(), &org)
+				if err != nil {
+					return nil, err
+				}
+
+				return nil, SaveOrg(user, org.Name)
+			default:
+				return nil, fmt.Errorf("/admin/orgs - unimplemented method: %v", r.Method)
+			}
+		default:
+			return nil, fmt.Errorf("adminHandler - unknown action: %v", action)
+		}
+	}()
 
 	if err != nil {
 		handleErr(w, err)
 	} else {
-		okResponse(w, &login)
+		if responseObject == nil {
+			responseObject = ""
+		}
+		okResponse(w, responseObject)
 	}
+}
+
+func auth(userName string) (string, error) {
+	_, err := GetUserDir(userName)
+	return userName, err
 }
 
 func okResponse(w http.ResponseWriter, thing interface{}) {
@@ -308,13 +307,7 @@ func handleErr(w http.ResponseWriter, e error) {
 func main() {
 	http.HandleFunc("/", fileHandler)
 	http.HandleFunc("/orgminder/", apiHandler)
-	http.HandleFunc("/management/", mgmtHandler)
+	http.HandleFunc("/admin/", adminHandler)
 	fmt.Printf("Listening on %s\n", PORT)
 	http.ListenAndServe(PORT, nil)
-}
-
-type Login struct {
-	Username  string `json:"username"`
-	Password  string `json:"password"`
-	GrantType string `json:"grant_type"`
 }

@@ -44,9 +44,13 @@ The following is a high level description of the code but it is assumed that you
     href="www/js/family-tree-component.js">www/js/family-tree-component.js</a>
 
 ---
-### <a href="www/lib/usergrid-utilities.js">www/lib/usergrid-utilities.js</a>
-* I wrote this as a simple client to Usergrid that implements the limited functionality that I'm using.
+### <a href="www/lib/api-client.js">www/lib/api-client.js</a>
+* Simple client to the webserver API.
 
 ---
-### <a href="www/lib/usergrid.js">www/lib/usergrid.js</a>
-* This comes with Usergrid and I found it to be a bit buggy and difficult to work with, so it's not currently used.
+### Users
+Password authentication is not yet implemented but to add a user to the system:
+* `make new user=bob password=foo`
+
+
+
