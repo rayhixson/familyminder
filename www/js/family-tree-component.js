@@ -184,7 +184,7 @@ define(function (require) {
 			    self.newSpouseName(null);
 
                 // then relate it to this parent
-                context.client.makeSpouse(self.uuid(), person.uuid(), function(err, data) {
+                context.client.addSpouse(self.uuid(), person.uuid(), function(err, data) {
                     if (err) {
                         context.handleError(err);
                     } else {
