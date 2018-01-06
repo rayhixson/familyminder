@@ -34,11 +34,11 @@
             <li><a href="mailto:info@glassbeadinc.com">Contact Me</a></li>
             <!--ko if: userLoggedIn-->
             <li><a href="#" data-bind="click: logout">Logout</a></li>
+            <li><a href="#" data-bind="click: $root.views().ADMIN.setCurrent">Families</a></li>
             <!--/ko-->
             <!--ko ifnot: userLoggedIn-->
             <li><a href="#" data-bind="click: $root.views().LOGIN.setCurrent">Login</a></li>
             <!--/ko-->
-            <li><a href="#" data-bind="click: $root.views().ADMIN.setCurrent">Admin</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li><a href="#" data-bind="click: toggleMode, text: modeText"></a></li>
