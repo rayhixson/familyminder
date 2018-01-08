@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"runtime/debug"
 	"strings"
+	"sync/atomic"
 
 	"github.com/pkg/errors"
 )
@@ -20,6 +21,8 @@ const PORT = ":9090"
 const ACCESS_TOKEN = "access_token"
 
 const DUMP_REQUESTS = false
+
+var requests uint64 = 0
 
 type Login struct {
 	Username  string `json:"username"`
@@ -39,11 +42,11 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, serveDir+r.URL.Path)
 }
 
-func readBody(w http.ResponseWriter, r *http.Request) (bytes.Buffer, error) {
+func readBody(reqID uint64, w http.ResponseWriter, r *http.Request) (bytes.Buffer, error) {
 	if r.URL.RawQuery == "" {
-		log.Printf("-------------- %v: %v", r.Method, r.URL.Path)
+		log.Printf("[%v]: %v %v", reqID, r.Method, r.URL.Path)
 	} else {
-		log.Printf("-------------- %v: %v?%v", r.Method, r.URL.Path, r.URL.RawQuery)
+		log.Printf("[%v]: %v %v?%v", reqID, r.Method, r.URL.Path, r.URL.RawQuery)
 	}
 	var buf bytes.Buffer
 	if DUMP_REQUESTS {
@@ -51,8 +54,7 @@ func readBody(w http.ResponseWriter, r *http.Request) (bytes.Buffer, error) {
 		if err != nil {
 			return buf, errors.Wrap(err, "Failed to Dump")
 		}
-		log.Printf("Request: %v", string(bytes))
-
+		log.Printf("[%v]: Request: %v", reqID, string(bytes))
 	}
 
 	if _, err := buf.ReadFrom(r.Body); err != nil {
@@ -63,15 +65,17 @@ func readBody(w http.ResponseWriter, r *http.Request) (bytes.Buffer, error) {
 	}
 
 	if r.Method == "POST" || r.Method == "PUT" {
-		log.Printf("Body: %v", buf.String())
+		log.Printf("[%v]: Body: %v", reqID, buf.String())
 	}
 
 	return buf, nil
 }
 
 func apiHandler(w http.ResponseWriter, r *http.Request) {
+	atomic.AddUint64(&requests, 1)
+	reqID := atomic.LoadUint64(&requests)
 	responseObject, err := func() (interface{}, error) {
-		buf, err := readBody(w, r)
+		buf, err := readBody(reqID, w, r)
 		if err != nil {
 			return nil, err
 		}
@@ -90,7 +94,7 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 			action = parts[5]
 		}
 
-		log.Printf("Family: %v, Action: %v", family, action)
+		log.Printf("[%v]: Family: %v, Action: %v", reqID, family, action)
 
 		switch action {
 		case "persons":
@@ -133,7 +137,7 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 		if responseObject == nil {
 			responseObject = ""
 		}
-		okResponse(w, responseObject)
+		okResponse(reqID, w, responseObject)
 	}
 }
 
@@ -217,7 +221,7 @@ func getPerson(user, family string, who string) (person *Person, err error) {
 
 func adminHandler(w http.ResponseWriter, r *http.Request) {
 	responseObject, err := func() (interface{}, error) {
-		buf, err := readBody(w, r)
+		buf, err := readBody(0, w, r)
 		if err != nil {
 			return nil, err
 		}
@@ -274,7 +278,7 @@ func adminHandler(w http.ResponseWriter, r *http.Request) {
 		if responseObject == nil {
 			responseObject = ""
 		}
-		okResponse(w, responseObject)
+		okResponse(0, w, responseObject)
 	}
 }
 
@@ -283,14 +287,14 @@ func auth(userName string) (string, error) {
 	return userName, err
 }
 
-func okResponse(w http.ResponseWriter, thing interface{}) {
+func okResponse(reqID uint64, w http.ResponseWriter, thing interface{}) {
 	res, err := json.Marshal(thing)
 	if err != nil {
 		handleErr(w, err)
 		return
 	}
 
-	log.Printf("OK RESPONSE: %v", string(res))
+	log.Printf("[%v]: OK RESPONSE: %v", reqID, string(res))
 
 	_, err = w.Write(res)
 	if err != nil {
