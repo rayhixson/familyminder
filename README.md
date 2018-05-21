@@ -7,9 +7,6 @@ A web app that allows you to easily build a family tree. Motivated by parents wi
 * Knockout <http://knockoutjs.com>
 * RequireJS <http://requirejs.org>
 
-### Backend
-* Usergrid <https://usergrid.apache.org>
-
 ## Finding your way around
 The following is a high level description of the code but it is assumed that you know how Knockout works.
 
