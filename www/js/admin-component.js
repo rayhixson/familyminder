@@ -32,7 +32,7 @@ define(function (require) {
                         
                         console.log("--> create dad for family");
                         var data = {
-                            email: 'ray@zenfoo.com',
+                            email: 'null@test.com',
                             name: 'Dad',
                             image: 'images/default.jpg'
                         };
